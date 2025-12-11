@@ -1,0 +1,272 @@
+<div class="w-full max-w-5xl flex flex-col max-h-[95vh] overflow-hidden">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6 pb-4 border-b border-border px-6 pt-6 flex-shrink-0">
+    <div class="flex-1">
+      <h2 class="text-3xl font-bold text-foreground">Asignar Rutina</h2>
+      <p class="text-sm text-muted-foreground mt-2">Paciente: {{ pacienteName }}</p>
+    </div>
+    <button
+      type="button"
+      (click)="onCancel()"
+      class="ml-4 p-0 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground flex-shrink-0"
+      title="Cerrar"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content (Scrollable) -->
+  <div class="overflow-y-auto flex-1 px-6 pb-6">
+    <form [formGroup]="routineForm" class="space-y-6">
+      
+      <!-- Información del Programa -->
+      <div class="border border-border rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <mat-icon class="text-primary ">info</mat-icon>
+          Información del Programa
+        </h3>
+        
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-foreground flex items-center gap-2">
+              <mat-icon class="text-primary">fitness_center</mat-icon>
+              Nombre del Programa *
+            </label>
+            <input
+              type="text"
+              formControlName="nombrePrograma"
+              placeholder="Ej: Rehabilitación de rodilla - Programa completo"
+              class="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+            <div *ngIf="isFieldInvalid('nombrePrograma')" class="text-sm text-destructive flex items-center gap-1 mt-1">
+              <mat-icon >error</mat-icon>
+              El nombre del programa es requerido
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-foreground flex items-center gap-2">
+              <mat-icon class="text-primary ">description</mat-icon>
+              Diagnóstico *
+            </label>
+            <textarea
+              formControlName="diagnostico"
+              placeholder="Describe el diagnóstico y los objetivos de la rutina..."
+              rows="4"
+              class="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+            ></textarea>
+            <div *ngIf="isFieldInvalid('diagnostico')" class="text-sm text-destructive flex items-center gap-1 mt-1">
+              <mat-icon>error</mat-icon>
+              El diagnóstico es requerido
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-foreground flex items-center gap-2">
+              <mat-icon class="text-primary">calendar_today</mat-icon>
+              Duración del Programa (semanas) *
+            </label>
+            <input
+              type="number"
+              formControlName="semanas"
+              min="1"
+              max="4"
+              class="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+            <p class="text-sm text-muted-foreground">
+              Este patrón semanal se repetirá durante {{ routineForm.get('semanas')?.value }} {{ routineForm.get('semanas')?.value === 1 ? 'semana' : 'semanas' }}
+            </p>
+            <div *ngIf="isFieldInvalid('semanas')" class="text-sm text-destructive flex items-center gap-1 mt-1">
+              <mat-icon >error</mat-icon>
+              La duración es requerida
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gestión de Semanas (Mostrar si hay más de 1 semana) -->
+      <div class="border border-border rounded-lg p-6" *ngIf="(routineForm.get('semanas')?.value || 0) > 1">
+        <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <mat-icon class="text-primary">date_range</mat-icon>
+          Gestión de Semanas
+        </h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div 
+            *ngFor="let semana of semanasRutina; let i = index" 
+            (click)="seleccionarSemana(i)" 
+            [class]="'p-4 rounded-lg border-2 transition-colors cursor-pointer ' + (selectedWeekIndex === i ? 'border-primary bg-primary/10' : 'border-border bg-muted/30 hover:bg-muted/50')">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <h4 class="font-semibold text-foreground">Semana {{ semana.semana }}</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <ng-container *ngIf="copiedWeekIndex === null">
+                <button
+                  type="button"
+                  (click)="iniciarCopiaSemana(i); $event.stopPropagation()"
+                  class="flex-1 px-2 py-2 rounded-lg border border-blue-300/50 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors text-xs font-medium flex items-center justify-center gap-1"
+                >
+                  Copiar
+                </button>
+                <button
+                  type="button"
+                  (click)="resetearSemana(i); $event.stopPropagation()"
+                  class="flex-1 px-2 py-2 rounded-lg border border-destructive/30 text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors text-xs font-medium flex items-center justify-center gap-1"
+                >
+                  Resetear
+                </button>
+              </ng-container>
+              <ng-container *ngIf="copiedWeekIndex !== null">
+                <button
+                  type="button"
+                  (click)="pegarSemana(i); $event.stopPropagation()"
+                  [disabled]="copiedWeekIndex === i"
+                  class="flex-1 px-2 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium flex items-center justify-center gap-1"
+                >
+                  <mat-icon>paste</mat-icon>
+                  Pegar
+                </button>
+                <button
+                  type="button"
+                  (click)="cancelarCopiaSemana(); $event.stopPropagation()"
+                  class="flex-1 px-2 py-2 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors text-xs font-medium"
+                >
+                  Cancelar
+                </button>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Planificación Semanal -->
+      <div class="border border-border rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <mat-icon class="text-primary ">event</mat-icon>
+          Planificación Semanal
+          <span *ngIf="(routineForm.get('semanas')?.value || 0) > 1" class="ml-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium">Semana {{ selectedWeekIndex + 1 }}</span>
+        </h3>
+
+        <div class="space-y-3">
+          <div
+            *ngFor="let dia of getSelectedWeekDias(); let i = index"
+            class="p-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors"
+          >
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <mat-icon class="text-muted-foreground ">calendar_today</mat-icon>
+                <div>
+                  <h4 class="font-semibold text-foreground">{{ dia.dia }}</h4>
+                  <div class="mt-1" *ngIf="dia.tipo === 'descanso'">
+                    <span class="inline-block px-3 py-1 rounded-full bg-blue-500/20 text-blue-600 text-xs font-medium">
+                      Día de Descanso
+                    </span>
+                  </div>
+                  <div class="mt-1" *ngIf="dia.tipo === 'rutina'">
+                    <span class="inline-block px-3 py-1 rounded-full bg-green-500/20 text-green-600 text-xs font-medium">
+                      Ejercicios Asignados
+                    </span>
+                  </div>
+                  <div class="mt-1" *ngIf="dia.tipo === null">
+                    <p class="text-sm text-muted-foreground">Sin asignar</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <ng-container *ngIf="dia.tipo === null && copiedFromIndex === null">
+                  <button
+                    type="button"
+                    (click)="seleccionarTipoDia(i, 'descanso')"
+                    class="px-3 py-2 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors text-sm font-medium"
+                  >
+                    Descanso
+                  </button>
+                  <button
+                    type="button"
+                    (click)="seleccionarTipoDia(i, 'rutina')"
+                    class="px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+                  >
+                    Ejercicios
+                  </button>
+                </ng-container>
+
+                <ng-container *ngIf="dia.tipo === null && copiedFromIndex !== null">
+                  <button
+                    type="button"
+                    (click)="pegarRutina(i)"
+                    class="px-3 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors text-sm font-medium flex items-center gap-1"
+                  >
+                    Pegar
+                  </button>
+                  <button
+                    type="button"
+                    (click)="cancelarCopia()"
+                    class="px-3 py-2 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors text-sm font-medium"
+                  >
+                    Cancelar
+                  </button>
+                </ng-container>
+
+                <ng-container *ngIf="dia.tipo === 'descanso'">
+                  <button
+                    type="button"
+                    (click)="cambiarDia(i)"
+                    class="px-3 py-2 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors text-sm font-medium"
+                  >
+                    Cambiar
+                  </button>
+                </ng-container>
+
+                <ng-container *ngIf="dia.tipo === 'rutina'">
+                  <button
+                    type="button"
+                    (click)="abrirModalEjercicios(i)"
+                    class="px-3 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-1"
+                  >
+                    <mat-icon >edit</mat-icon>
+                    Ejercicios
+                  </button>
+                  <button
+                    type="button"
+                    (click)="iniciarCopia(i)"
+                    class="px-3 py-2 rounded-lg border border-blue-300/50 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors text-sm font-medium flex items-center gap-1"
+                  >
+                    Copiar
+                  </button>
+                  <button
+                    type="button"
+                    (click)="eliminarRutinaDia(i)"
+                    class="px-3 py-2 rounded-lg border border-destructive/30 text-destructive bg-destructive/5 hover:bg-destructive/10 transition-colors text-sm font-medium"
+                  >
+                    Eliminar
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Footer with Buttons (Fixed) -->
+  <div class="flex gap-3 px-6 pb-6 border-t border-border flex-shrink-0 pt-6">
+    <button
+      type="button"
+      (click)="onCancel()"
+      class="flex-1 px-4 py-3 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors font-medium"
+    >
+      Cancelar
+    </button>
+    <button
+      type="submit"
+      [disabled]="!routineForm.valid || isSubmitting || !allDaysAssigned()"
+      (click)="onSubmit()"
+      class="flex-1 px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+    >
+      <mat-icon *ngIf="isSubmitting">refresh</mat-icon>
+      <span *ngIf="!isSubmitting">Guardar Rutina</span>
+      <span *ngIf="isSubmitting">Guardando...</span>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,243 @@
+<div class="w-full max-w-4xl flex flex-col max-h-[95vh] overflow-hidden">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6 pb-4 border-b border-border px-6 pt-6 flex-shrink-0">
+    <div class="flex-1">
+      <h2 class="text-3xl font-bold text-foreground">Ejercicios</h2>
+      <p class="text-sm text-muted-foreground mt-2">{{ dayName }}</p>
+    </div>
+    <button
+      type="button"
+      (click)="onCancel()"
+      class="ml-4 p-0 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground flex-shrink-0"
+      title="Cerrar"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Content (Scrollable) -->
+  <div class="overflow-y-auto flex-1 px-6 pb-6">
+    <div class="space-y-4">
+      <!-- Header with Add Button -->
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-foreground">Ejercicios</h3>
+          <p class="text-sm text-muted-foreground">Agrega los ejercicios de la rutina</p>
+        </div>
+        <button
+          type="button"
+          (click)="agregarEjercicio()"
+          class="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium flex items-center gap-2"
+        >
+          <mat-icon class="!size-4">add</mat-icon>
+          Agregar
+        </button>
+      </div>
+
+      <!-- Ejercicios List -->
+      <div class="space-y-4">
+        <div
+          *ngFor="let ejercicio of ejercicios; let index = index"
+          class="p-4 rounded-lg border border-border bg-muted/30"
+        >
+          <div class="flex items-start gap-3 mb-4">
+            <!-- Move Buttons -->
+            <div class="flex flex-col gap-1 pt-2">
+              <button
+                type="button"
+                (click)="moverEjercicio(index, 'arriba')"
+                [disabled]="index === 0"
+                class="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Mover arriba"
+              >
+                <mat-icon class="!size-5">expand_less</mat-icon>
+              </button>
+              <button
+                type="button"
+                (click)="moverEjercicio(index, 'abajo')"
+                [disabled]="index === ejercicios.length - 1"
+                class="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Mover abajo"
+              >
+                <mat-icon class="!size-5">expand_more</mat-icon>
+              </button>
+            </div>
+
+            <!-- Ejercicio Content -->
+            <div class="flex-1 space-y-4">
+              <!-- Title and Delete -->
+              <div class="flex items-center justify-between">
+                <h4 class="font-semibold text-foreground">Ejercicio {{ index + 1 }}</h4>
+                <button
+                  *ngIf="ejercicios.length > 1"
+                  type="button"
+                  (click)="eliminarEjercicio(ejercicio.id)"
+                  class="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-destructive"
+                  title="Eliminar ejercicio"
+                >
+                  <mat-icon class="!size-5">delete</mat-icon>
+                </button>
+              </div>
+
+              <!-- Nombre del Ejercicio -->
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">Nombre del Ejercicio *</label>
+                <input
+                  type="text"
+                  placeholder="Ej: Flexión de rodilla asistida"
+                  [(ngModel)]="ejercicio.nombre"
+                  [ngModelOptions]="{updateOn: 'blur'}"
+                  class="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+
+              <!-- Descripción -->
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-foreground">Descripción Breve *</label>
+                <input
+                  type="text"
+                  placeholder="Ej: Ejercicio para mejorar movilidad de rodilla"
+                  [(ngModel)]="ejercicio.descripcion"
+                  [ngModelOptions]="{updateOn: 'blur'}"
+                  class="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+
+              <!-- Series, Repeticiones, Descanso -->
+              <div class="grid grid-cols-3 gap-3">
+                <div class="space-y-2">
+                  <label class="text-sm font-semibold text-foreground">Series *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    [(ngModel)]="ejercicio.series"
+                    [ngModelOptions]="{updateOn: 'blur'}"
+                    class="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-semibold text-foreground">Repeticiones *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    [(ngModel)]="ejercicio.repeticiones"
+                    [ngModelOptions]="{updateOn: 'blur'}"
+                    class="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-semibold text-foreground">Descanso (seg) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="300"
+                    step="15"
+                    [(ngModel)]="ejercicio.descanso"
+                    [ngModelOptions]="{updateOn: 'blur'}"
+                    class="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Instrucciones -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="text-sm font-semibold text-foreground">Instrucciones Paso a Paso *</label>
+                  <button
+                    type="button"
+                    (click)="agregarInstruccion(ejercicio.id)"
+                    class="px-3 py-1 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors text-xs font-medium flex items-center gap-1"
+                  >
+                    <mat-icon class="!size-3">add</mat-icon>
+                    Agregar Paso
+                  </button>
+                </div>
+
+                <div class="space-y-2">
+                  <div
+                    *ngFor="let instruccion of ejercicio.instrucciones; let instruccionIndex = index"
+                    class="flex items-start gap-2"
+                  >
+                    <!-- Move Instruction Buttons -->
+                    <div class="flex flex-col gap-1 pt-2">
+                      <button
+                        type="button"
+                        (click)="moverInstruccion(ejercicio.id, instruccionIndex, instruccionIndex - 1)"
+                        [disabled]="instruccionIndex === 0"
+                        class="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Mover arriba"
+                      >
+                        <mat-icon class="!size-4">expand_less</mat-icon>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="moverInstruccion(ejercicio.id, instruccionIndex, instruccionIndex + 1)"
+                        [disabled]="instruccionIndex === ejercicio.instrucciones.length - 1"
+                        class="text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Mover abajo"
+                      >
+                        <mat-icon class="!size-4">expand_more</mat-icon>
+                      </button>
+                    </div>
+
+                    <!-- Instruction Input -->
+                    <div class="flex-1 flex items-center gap-2">
+                      <span class="text-sm font-medium text-muted-foreground min-w-[24px]">
+                        {{ instruccionIndex + 1 }}.
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Paso {{ instruccionIndex + 1 }}"
+                        [(ngModel)]="ejercicio.instrucciones[instruccionIndex]"
+                        [ngModelOptions]="{updateOn: 'blur'}"
+                        class="flex-1 px-4 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                        required
+                      />
+                      <button
+                        *ngIf="ejercicio.instrucciones.length > 1"
+                        type="button"
+                        (click)="eliminarInstruccion(ejercicio.id, instruccionIndex)"
+                        class="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-destructive"
+                        title="Eliminar instrucción"
+                      >
+                        <mat-icon class="!size-4">delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer with Buttons (Fixed) -->
+  <div class="flex gap-3 px-6 pb-6 border-t border-border flex-shrink-0 pt-6">
+    <button
+      type="button"
+      (click)="onCancel()"
+      class="flex-1 px-4 py-3 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors font-medium"
+    >
+      Cancelar
+    </button>
+    <button
+      type="submit"
+      [disabled]="!allExercisesValid() || isSubmitting"
+      (click)="onSubmit()"
+      class="flex-1 px-4 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+    >
+      <mat-icon class="!size-4" *ngIf="isSubmitting">refresh</mat-icon>
+      <span *ngIf="!isSubmitting">Guardar Ejercicios</span>
+      <span *ngIf="isSubmitting">Guardando...</span>
+    </button>
+  </div>
+</div>

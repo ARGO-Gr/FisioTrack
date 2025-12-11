@@ -1,0 +1,209 @@
+<div class="min-h-screen bg-background">
+  <!-- Header Navigation -->
+  <header class="border-b border-border bg-card sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-primary">favorite_border</mat-icon>
+          <h1 class="text-2xl font-bold">FisioTrack</h1>
+        </div>
+        <nav class="flex items-center gap-4">
+          <a routerLink="/paciente/dashboard" class="text-sm font-medium hover:text-primary transition-colors">
+            Dashboard
+          </a>
+          <a routerLink="/paciente/rutinas" class="text-sm font-medium hover:text-primary transition-colors">
+            Mis Rutinas
+          </a>
+          <a routerLink="/paciente/citas" class="text-sm font-medium hover:text-primary transition-colors">
+            Mis Citas
+          </a>
+          <app-user-menu
+            (changeInfo)="onChangeInfo()"
+            (logout)="logout()"
+          ></app-user-menu>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-6 lg:px-12 py-8">
+    <!-- Program Header -->
+    <div class="mb-8">
+      <h2 class="text-4xl font-bold text-foreground mb-2">{{ programa.nombre }}</h2>
+      <p class="text-muted-foreground">{{ programa.descripcion }}</p>
+    </div>
+
+    <!-- Program Overview -->
+    <app-card class="mb-8 border-primary/20">
+      <app-card-header>
+        <app-card-title>Resumen del Programa</app-card-title>
+        <app-card-description>Tu plan de rehabilitación personalizado</app-card-description>
+      </app-card-header>
+      <app-card-content>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div class="space-y-1">
+            <p class="text-sm text-muted-foreground">Duración Total</p>
+            <p class="text-2xl font-bold text-foreground">{{ programa.totalSemanas }} semanas</p>
+          </div>
+          <div class="space-y-1">
+            <p class="text-sm text-muted-foreground">Semana Actual</p>
+            <p class="text-2xl font-bold text-foreground">
+              Semana {{ programa.semanaActual }}/{{ programa.totalSemanas }}
+            </p>
+          </div>
+          <div class="space-y-1">
+            <p class="text-sm text-muted-foreground">Período</p>
+            <p class="text-2xl font-bold text-foreground">
+              {{ programa.fechaInicio }} - {{ programa.fechaFin }}
+            </p>
+          </div>
+          <div class="space-y-1">
+            <p class="text-sm text-muted-foreground">Fisioterapeuta</p>
+            <p class="text-2xl font-bold text-foreground">{{ programa.fisioterapeuta }}</p>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-muted-foreground">Progreso General del Programa</span>
+            <span class="font-medium text-foreground">
+              {{ programa.diasCompletados }}/{{ programa.diasTotales }} días ({{ progresoGeneral }}%)
+            </span>
+          </div>
+          <div class="w-full bg-muted rounded-full h-3 overflow-hidden">
+            <div
+              class="bg-primary h-full transition-all duration-300"
+              [style.width.%]="progresoGeneral"
+            ></div>
+          </div>
+        </div>
+      </app-card-content>
+    </app-card>
+
+    <!-- Week Selector -->
+    <div class="mt-8 mb-6 flex items-center justify-between flex-wrap gap-4">
+      <h3 class="text-2xl font-bold text-foreground">Semana {{ semanaSeleccionada }}</h3>
+      <div class="flex items-center gap-2">
+        <app-button
+          size="sm"
+          [disabled]="semanaSeleccionada === 1"
+          (click)="irAnterior()"
+        >
+          <mat-icon>chevron_left</mat-icon>
+        </app-button>
+        <div class="flex gap-2">
+          <button
+            *ngFor="let semana of semanas"
+            [ngClass]="semanaSeleccionada === semana.numero 
+              ? 'bg-primary text-white border-primary' 
+              : 'bg-white border-border text-foreground hover:bg-muted'"
+            (click)="cambiarSemana(semana.numero)"
+            class="w-10 h-10 rounded-md font-medium text-sm transition-colors duration-200 items-center justify-center border border-solid"
+          >
+            {{ semana.numero }}
+          </button>
+        </div>
+        <app-button
+          size="sm"
+          [disabled]="semanaSeleccionada === programa.totalSemanas"
+          (click)="irSiguiente()"
+        >
+          <mat-icon>chevron_right</mat-icon>
+        </app-button>
+      </div>
+    </div>
+
+    <!-- Week Status Badge -->
+    <div class="mb-6">
+      <div
+        *ngIf="semanaActual.estado === 'completada'"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-700"
+      >
+        <mat-icon>check_circle</mat-icon>
+        <span class="font-medium">Semana Completada</span>
+      </div>
+      <div
+        *ngIf="semanaActual.estado === 'en-progreso'"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700"
+      >
+        <mat-icon>activity</mat-icon>
+        <span class="font-medium">Semana en Progreso</span>
+      </div>
+      <div
+        *ngIf="semanaActual.estado === 'pendiente'"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground"
+      >
+        <mat-icon>calendar_today</mat-icon>
+        <span class="font-medium">Semana Pendiente</span>
+      </div>
+    </div>
+
+    <!-- Days Grid -->
+    <div class="space-y-4 mb-12">
+      <app-card
+        *ngFor="let dia of semanaActual.dias; let i = index"
+        [ngClass]="dia.completado
+          ? 'border-green-300/50 bg-green-50/50'
+          : dia.tipo === 'descanso'
+            ? 'border-blue-300/50 bg-blue-50/50'
+            : ''"
+      >
+        <app-card-content class="p-6">
+          <div class="flex items-center justify-between gap-4">
+            <!-- Left Section -->
+            <div class="flex items-center gap-4 flex-1">
+              <div
+                [ngClass]="getDiaColor(dia)"
+                class="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
+              >
+                <mat-icon class="text-2xl">{{ getDiaIcono(dia) }}</mat-icon>
+              </div>
+              <div class="flex-1">
+                <h4 class="text-xl font-bold text-foreground mb-1">{{ dia.dia }}</h4>
+                <div *ngIf="dia.tipo === 'rutina'" class="space-y-1">
+                  <p class="text-base text-muted-foreground">{{ dia.nombre }}</p>
+                  <div class="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div class="flex items-center gap-1">
+                      <mat-icon class="text-sm">fitness_center</mat-icon>
+                      <span>{{ dia.ejercicios }} ejercicios</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <mat-icon class="text-sm">schedule</mat-icon>
+                      <span>~{{ getTiempoEstimado(dia.ejercicios || 0) }} min</span>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="dia.tipo === 'descanso'">
+                  <p class="text-base text-muted-foreground">
+                    Día de descanso - Permite que tu cuerpo se recupere
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Section -->
+            <div class="flex items-center gap-3 flex-shrink-0">
+              <div *ngIf="dia.completado" class="flex items-center gap-2 text-green-600">
+                <mat-icon>check_circle</mat-icon>
+                <span class="font-medium">Completado</span>
+              </div>
+              <div *ngIf="!dia.completado && dia.tipo === 'rutina' && !esdiaPosterior(i)">
+                <a [routerLink]="['/paciente/rutinas', semanaActual.numero + '-' + (i + 1)]">
+                  <app-button size="lg">
+                    <mat-icon class="mr-2">play_arrow</mat-icon>
+                    Iniciar Rutina
+                  </app-button>
+                </a>
+              </div>
+              <div *ngIf="!dia.completado && dia.tipo === 'descanso'" class="text-muted-foreground font-medium">
+                Descanso
+              </div>
+              <div *ngIf="!dia.completado && dia.tipo === 'rutina' && esdiaPosterior(i)" class="text-muted-foreground font-medium">
+                Bloqueado
+              </div>
+            </div>
+          </div>
+        </app-card-content>
+      </app-card>
+    </div>
+  </main>
+</div>

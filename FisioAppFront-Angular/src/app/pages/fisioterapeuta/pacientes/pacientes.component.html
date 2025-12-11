@@ -1,0 +1,56 @@
+<div class="min-h-screen bg-background">
+  <header class="border-b border-border bg-card sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-primary">favorite_border</mat-icon>
+          <h1 class="text-2xl font-bold">FisioTrack</h1>
+        </div>
+        <nav class="flex items-center gap-4">
+          <a routerLink="/fisioterapeuta/dashboard" class="text-sm font-medium hover:text-primary transition-colors">
+            Dashboard
+          </a>
+          <a routerLink="/fisioterapeuta/agenda" class="text-sm font-medium hover:text-primary transition-colors">
+            Agenda
+          </a>
+          <a routerLink="/fisioterapeuta/pacientes" class="text-sm font-medium hover:text-primary transition-colors">
+            Pacientes
+          </a>
+          <button
+            (click)="logout()"
+            class="text-sm font-medium text-red-500 hover:text-red-700 hover:border-red-500 border-2 border-transparent px-3 py-2 rounded-md transition-all duration-200"
+          >
+            Salir
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-4xl font-bold">Mis Pacientes</h2>
+      <app-button>Agregar Paciente</app-button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <app-card *ngFor="let paciente of pacientes" class="cursor-pointer hover:shadow-lg transition-shadow">
+        <app-card-header>
+          <mat-icon class="text-primary">person</mat-icon>
+          <app-card-title>{{ paciente.nombre }}</app-card-title>
+        </app-card-header>
+        <app-card-content>
+          <p class="text-muted-foreground mb-2">
+            <strong>Email:</strong> {{ paciente.email }}
+          </p>
+          <p class="text-muted-foreground mb-2">
+            <strong>Teléfono:</strong> {{ paciente.telefono }}
+          </p>
+          <p class="text-muted-foreground">
+            <strong>Diagnóstico:</strong> {{ paciente.diagnostico }}
+          </p>
+        </app-card-content>
+      </app-card>
+    </div>
+  </main>
+</div>

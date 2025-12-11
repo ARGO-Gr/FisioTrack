@@ -1,0 +1,72 @@
+@FisioAppAPI_HostAddress = http://localhost:5225
+
+GET {{FisioAppAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+# ==================== APPOINTMENTS ENDPOINTS ====================
+
+# 1. Obtener todas las citas de un día específico
+# Parámetros: ID del fisioterapeuta y fecha (YYYY-MM-DD)
+# Respuesta: Info de la cita + nombre y email del paciente
+GET {{FisioAppAPI_HostAddress}}/api/appointments/dia/550e8400-e29b-41d4-a716-446655440000?fecha=2025-12-15
+Accept: application/json
+
+###
+
+# 2. Búsqueda en vivo de pacientes (nombre o email) en toda la BD
+# Parámetros: Término de búsqueda (nombre o email)
+# Respuesta: ID, nombre y email del paciente que coincida
+GET {{FisioAppAPI_HostAddress}}/api/appointments/buscar-pacientes?search=juan
+Accept: application/json
+
+###
+
+# 3. Búsqueda en vivo de pacientes por email
+GET {{FisioAppAPI_HostAddress}}/api/appointments/buscar-pacientes?search=juan@email.com
+Accept: application/json
+
+###
+
+# 4. Crear una nueva cita
+POST {{FisioAppAPI_HostAddress}}/api/appointments
+Content-Type: application/json
+
+{
+  "pacienteId": "660e8400-e29b-41d4-a716-446655440000",
+  "fisioterapeutaId": "550e8400-e29b-41d4-a716-446655440000",
+  "fecha": "2025-12-15",
+  "hora": "14:30",
+  "tipo": "Seguimiento",
+  "descripcion": "Sesión de fisioterapia - Primera sesión"
+}
+
+###
+
+# 5. Obtener una cita específica por ID
+GET {{FisioAppAPI_HostAddress}}/api/appointments/770e8400-e29b-41d4-a716-446655440000
+Accept: application/json
+
+###
+
+# 6. Actualizar una cita existente
+PUT {{FisioAppAPI_HostAddress}}/api/appointments/770e8400-e29b-41d4-a716-446655440000
+Content-Type: application/json
+
+{
+  "pacienteId": "660e8400-e29b-41d4-a716-446655440000",
+  "fecha": "2025-12-16",
+  "hora": "15:00",
+  "tipo": "TerapiaManual",
+  "descripcion": "Sesión de fisioterapia - Seguimiento",
+  "estado": "Confirmada"
+}
+
+###
+
+# 7. Eliminar una cita
+DELETE {{FisioAppAPI_HostAddress}}/api/appointments/770e8400-e29b-41d4-a716-446655440000
+Accept: application/json
+
+###

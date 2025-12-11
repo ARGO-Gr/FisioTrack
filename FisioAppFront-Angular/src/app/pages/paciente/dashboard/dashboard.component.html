@@ -1,0 +1,104 @@
+<div class="min-h-screen bg-background">
+  <!-- Header Navigation -->
+  <header class="border-b border-border bg-card sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-primary">favorite_border</mat-icon>
+          <h1 class="text-2xl font-bold">FisioTrack</h1>
+        </div>
+        <nav class="flex items-center gap-4">
+          <a routerLink="/paciente/dashboard" class="text-sm font-medium hover:text-primary transition-colors">
+            Dashboard
+          </a>
+          <a routerLink="/paciente/rutinas" class="text-sm font-medium hover:text-primary transition-colors">
+            Mis Rutinas
+          </a>
+          <a routerLink="/paciente/citas" class="text-sm font-medium hover:text-primary transition-colors">
+            Mis Citas
+          </a>
+          <app-user-menu
+            (changeInfo)="onChangeInfo()"
+            (logout)="logout()"
+          ></app-user-menu>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <h2 class="text-4xl font-bold text-foreground mb-8">Bienvenido, Paciente</h2>
+
+    <!-- Upcoming Appointments -->
+    <app-card class="mb-8">
+      <app-card-header>
+        <app-card-title>Mis Citas Próximas</app-card-title>
+        <app-card-description>Tus próximas citas programadas</app-card-description>
+      </app-card-header>
+      <app-card-content>
+        <div *ngIf="citasProximas.length > 0; else noCitas" class="space-y-3">
+          <div *ngFor="let cita of citasProximas" [ngClass]="getCitaColor(cita)" class="p-4 rounded-lg border-l-4">
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex-1">
+                <h3 class="font-semibold text-foreground">{{ cita.descripcion || 'Cita de fisioterapia' }}</h3>
+                <p class="text-sm text-muted-foreground">{{ cita.tipo }}</p>
+              </div>
+              <span class="px-2 py-1 rounded text-xs font-medium whitespace-nowrap ml-2"
+                [ngClass]="getEstadoText(cita) === 'Confirmada' 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'bg-yellow-100 text-yellow-700'">
+                {{ getEstadoText(cita) }}
+              </span>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-muted-foreground">
+              <div class="flex items-center gap-1">
+                <mat-icon class="text-sm">calendar_today</mat-icon>
+                <span>{{ formatDate(cita.fecha) }}</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <mat-icon class="text-sm">schedule</mat-icon>
+                <span>{{ cita.hora }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noCitas>
+          <p class="text-muted-foreground text-center py-4">No tienes citas próximas programadas</p>
+        </ng-template>
+        <a routerLink="/paciente/citas" class="mt-4 inline-block">
+          <app-button size="sm">Ver Todas las Citas</app-button>
+        </a>
+      </app-card-content>
+    </app-card>
+
+    <!-- Active Routines -->
+    <app-card class="mb-8">
+      <app-card-header>
+        <app-card-title>Mis Rutinas Activas</app-card-title>
+        <app-card-description>Ejercicios asignados por tu fisioterapeuta</app-card-description>
+      </app-card-header>
+      <app-card-content>
+        <div *ngIf="rutinas.length > 0; else noRutinas" class="space-y-4">
+          <div *ngFor="let rutina of rutinas" class="p-4 border rounded-lg hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-semibold">{{ rutina.nombre }}</h3>
+                <p class="text-sm text-muted-foreground">{{ rutina.descripcion }}</p>
+                <p class="text-sm text-muted-foreground mt-1">{{ rutina.ejercicios.length }} ejercicios</p>
+              </div>
+              <span class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                {{ rutina.estado }}
+              </span>
+            </div>
+            <a [routerLink]="['/paciente/rutinas', rutina.id]" class="mt-3 inline-block">
+              <app-button size="sm">Ver Detalles</app-button>
+            </a>
+          </div>
+        </div>
+        <ng-template #noRutinas>
+          <p class="text-muted-foreground">No tienes rutinas asignadas aún</p>
+        </ng-template>
+      </app-card-content>
+    </app-card>
+  </main>
+</div>

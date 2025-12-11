@@ -1,0 +1,46 @@
+/* Modal Container */
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:host ::ng-deep {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+  }
+
+  /* Asegurar z-index para overlay del modal de ejercicios */
+  .cdk-overlay-pane {
+    z-index: 1200 !important;
+  }
+}
+
+/* Ensure smooth scrolling */
+.overflow-y-auto {
+  scroll-behavior: smooth;
+}
+
+/* Input styling tweaks */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* Material Icon sizing - prevent icons from overflowing buttons */
+mat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1.25rem;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}

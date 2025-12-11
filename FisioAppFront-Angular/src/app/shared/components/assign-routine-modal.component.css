@@ -1,0 +1,15 @@
+:host ::ng-deep {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+  }
+
+  /* Estilo para el modal de ejercicios */
+  .exercises-modal-panel {
+    z-index: 1200 !important;
+  }
+
+  /* Asegurar que el backdrop del segundo modal esté encima del primer modal */
+  .cdk-overlay-pane:has(.exercises-modal-panel) {
+    z-index: 1200 !important;
+  }
+}

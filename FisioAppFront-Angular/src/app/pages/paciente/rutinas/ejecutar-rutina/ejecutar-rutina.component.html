@@ -1,0 +1,247 @@
+<div class="min-h-screen bg-background pb-12">
+  <!-- Header -->
+  <header class="border-b border-border bg-card sticky top-0 z-10">
+    <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a routerLink="/paciente/rutinas">
+          <app-button size="sm">
+            <mat-icon class="mr-2">close</mat-icon>
+            Salir
+          </app-button>
+        </a>
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-primary text-2xl">fitness_center</mat-icon>
+          <div>
+            <h1 class="text-lg font-bold text-foreground">{{ rutina.nombre }}</h1>
+            <p class="text-xs text-muted-foreground">
+              Ejercicio {{ ejercicioActual + 1 }} de {{ ejercicios.length }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="text-right hidden md:block">
+          <p class="text-sm font-medium text-foreground">{{ progresoTotal | number : '1.0-0' }}% Completado</p>
+          <div class="w-32 h-2 mt-1 bg-muted rounded-full overflow-hidden">
+            <div class="bg-primary h-full transition-all" [style.width.%]="progresoTotal"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8 pb-12">
+    <ng-container *ngIf="!todosCompletados">
+      <div class="max-w-4xl mx-auto">
+        <!-- Progress Bar Mobile -->
+        <div class="md:hidden mb-6">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-foreground">{{ progresoTotal | number : '1.0-0' }}% Completado</span>
+          </div>
+          <div class="w-full h-2 bg-muted rounded-full overflow-hidden">
+            <div class="bg-primary h-full transition-all" [style.width.%]="progresoTotal"></div>
+          </div>
+        </div>
+
+        <!-- Rest Screen -->
+        <ng-container *ngIf="enDescanso">
+          <app-card class="bg-gradient-to-br from-secondary/20 to-secondary/5 border-secondary/30">
+            <app-card-content class="p-12 text-center">
+              <mat-icon class="text-secondary text-6xl mx-auto mb-6">schedule</mat-icon>
+              <h2 class="text-3xl font-bold text-foreground mb-2">Tiempo de Descanso</h2>
+              <p class="text-muted-foreground mb-8">Relájate y prepárate para el siguiente ejercicio</p>
+              <div class="text-7xl font-bold text-secondary mb-8">{{ tiempoRestante }}s</div>
+              <div class="flex items-center justify-center gap-4 flex-wrap">
+                <app-button size="lg" (click)="togglePausa()">
+                  <mat-icon class="mr-2">{{ isPaused ? 'play_arrow' : 'pause' }}</mat-icon>
+                  {{ isPaused ? 'Reanudar' : 'Pausar' }}
+                </app-button>
+                <app-button size="lg" (click)="handleSiguienteEjercicio()">
+                  Saltar Descanso
+                  <mat-icon class="ml-2">chevron_right</mat-icon>
+                </app-button>
+              </div>
+            </app-card-content>
+          </app-card>
+        </ng-container>
+
+        <!-- Exercise Screen -->
+        <ng-container *ngIf="!enDescanso">
+          <div class="space-y-6">
+            <app-card>
+              <app-card-header>
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <app-card-title class="text-3xl mb-2">{{ ejercicioActivo.nombre }}</app-card-title>
+                    <app-card-description class="text-lg">{{ ejercicioActivo.descripcion }}</app-card-description>
+                  </div>
+                  <div
+                    *ngIf="ejercicioActivo.completado"
+                    class="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20"
+                  >
+                    <mat-icon class="text-secondary">check_circle</mat-icon>
+                    <span class="text-sm font-medium text-secondary">Completado</span>
+                  </div>
+                </div>
+              </app-card-header>
+              <app-card-content>
+                <div class="grid md:grid-cols-3 gap-4 mb-6">
+                  <div class="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                    <mat-icon class="text-primary text-2xl">fitness_center</mat-icon>
+                    <div>
+                      <p class="text-sm text-muted-foreground">Repeticiones</p>
+                      <p class="font-semibold text-foreground">{{ ejercicioActivo.repeticiones }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                    <mat-icon class="text-secondary text-2xl">repeat</mat-icon>
+                    <div>
+                      <p class="text-sm text-muted-foreground">Series</p>
+                      <p class="font-semibold text-foreground">{{ ejercicioActivo.series }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 p-4 rounded-lg bg-muted/50">
+                    <mat-icon class="text-accent text-2xl">schedule</mat-icon>
+                    <div>
+                      <p class="text-sm text-muted-foreground">Descanso</p>
+                      <p class="font-semibold text-foreground">{{ ejercicioActivo.descanso }}s</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <h3 class="text-xl font-semibold text-foreground">Instrucciones</h3>
+                  <ol class="space-y-3">
+                    <li *ngFor="let instruccion of ejercicioActivo.instrucciones; let i = index" class="flex gap-3">
+                      <span
+                        class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-sm"
+                      >
+                        {{ i + 1 }}
+                      </span>
+                      <p class="text-muted-foreground leading-relaxed pt-1">{{ instruccion }}</p>
+                    </li>
+                  </ol>
+                </div>
+              </app-card-content>
+            </app-card>
+
+            <!-- Navigation Buttons -->
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+              <app-button
+                size="lg"
+                [disabled]="ejercicioActual === 0"
+                (click)="handleAnteriorEjercicio()"
+              >
+                <mat-icon class="mr-2">chevron_left</mat-icon>
+                Anterior
+              </app-button>
+
+              <app-button
+                *ngIf="!ejercicioActivo.completado"
+                size="lg"
+                (click)="handleCompletarEjercicio()"
+              >
+                <mat-icon class="mr-2">check_circle</mat-icon>
+                Marcar como Completado
+              </app-button>
+
+              <app-button
+                size="lg"
+                [disabled]="ejercicioActual === ejercicios.length - 1"
+                (click)="handleSiguienteEjercicio()"
+              >
+                Siguiente
+                <mat-icon class="ml-2">chevron_right</mat-icon>
+              </app-button>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Exercise List -->
+        <app-card class="mt-8 mb-8">
+          <app-card-header>
+            <app-card-title>Ejercicios de la Rutina</app-card-title>
+          </app-card-header>
+          <app-card-content>
+            <div class="space-y-2">
+              <button
+                *ngFor="let ejercicio of ejercicios; let i = index"
+                (click)="selectEjercicio(i)"
+                [ngClass]="
+                  i === ejercicioActual
+                    ? 'bg-primary/10 border-2 border-primary'
+                    : 'bg-muted/30 hover:bg-muted/50'
+                "
+                class="w-full flex items-center justify-between p-4 rounded-lg transition-all"
+              >
+                <div class="flex items-center gap-3">
+                  <span
+                    [ngClass]="
+                      ejercicio.completado
+                        ? 'bg-secondary text-secondary-foreground'
+                        : i === ejercicioActual
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                    "
+                    class="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm"
+                  >
+                    <mat-icon *ngIf="ejercicio.completado" class="text-lg">check_circle</mat-icon>
+                    <span *ngIf="!ejercicio.completado">{{ i + 1 }}</span>
+                  </span>
+                  <div class="text-left">
+                    <p class="font-medium text-foreground">{{ ejercicio.nombre }}</p>
+                    <p class="text-sm text-muted-foreground">
+                      {{ ejercicio.repeticiones }} • {{ ejercicio.series }} series
+                    </p>
+                  </div>
+                </div>
+                <span
+                  *ngIf="i === ejercicioActual"
+                  class="text-xs font-medium text-primary px-3 py-1 rounded-full bg-primary/20"
+                >
+                  Actual
+                </span>
+              </button>
+            </div>
+          </app-card-content>
+        </app-card>
+      </div>
+    </ng-container>
+
+    <!-- Completion Screen -->
+    <ng-container *ngIf="todosCompletados">
+      <div class="max-w-2xl mx-auto">
+        <app-card class="bg-gradient-to-br from-secondary/20 to-primary/10 border-secondary/30">
+          <app-card-content class="p-12 text-center">
+            <div class="w-20 h-20 rounded-full bg-secondary/20 flex items-center justify-center mx-auto mb-6">
+              <mat-icon class="text-secondary text-5xl">check_circle</mat-icon>
+            </div>
+            <h2 class="text-4xl font-bold text-foreground mb-4">¡Rutina Completada!</h2>
+            <p class="text-lg text-muted-foreground mb-8 leading-relaxed">
+              Excelente trabajo. Has completado todos los ejercicios de la rutina "{{ rutina.nombre }}".
+            </p>
+            <div class="grid grid-cols-3 gap-4 mb-8">
+              <div class="p-4 rounded-lg bg-card">
+                <p class="text-3xl font-bold text-primary mb-1">{{ ejercicios.length }}</p>
+                <p class="text-sm text-muted-foreground">Ejercicios</p>
+              </div>
+              <div class="p-4 rounded-lg bg-card">
+                <p class="text-3xl font-bold text-secondary mb-1">
+                  {{ getSeriesTotal() }}
+                </p>
+                <p class="text-sm text-muted-foreground">Series Totales</p>
+              </div>
+              <div class="p-4 rounded-lg bg-card">
+                <p class="text-3xl font-bold text-accent mb-1">100%</p>
+                <p class="text-sm text-muted-foreground">Completado</p>
+              </div>
+            </div>
+            <app-button size="lg" (click)="handleFinalizarRutina()" class="w-full max-w-md">
+              Volver al Dashboard
+            </app-button>
+          </app-card-content>
+        </app-card>
+      </div>
+    </ng-container>
+  </main>
+</div>
