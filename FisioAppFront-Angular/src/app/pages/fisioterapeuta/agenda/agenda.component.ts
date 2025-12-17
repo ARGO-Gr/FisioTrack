@@ -7,7 +7,8 @@ import { AppointmentService, Appointment, CreateAppointmentDto, UpdateAppointmen
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { ScheduleCitaModalComponent, ConfirmDeleteModalComponent, ConfirmCancelModalComponent, SpeedDialComponent, SpeedDialStatesComponent, CalendarModalComponent, UserMenuComponent } from '../../../shared/components';
+import { ScheduleCitaModalComponent, ConfirmDeleteModalComponent, ConfirmCancelModalComponent, SpeedDialComponent, SpeedDialStatesComponent, CalendarModalComponent, UserMenuComponent, CobroModalComponent } from '../../../shared/components';
+import { HeaderComponent, NavLink } from '../../../shared/components/header.component';
 import { ToastService } from '../../../shared/services/toast.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -32,36 +33,16 @@ interface HorarioSlot {
     MatButtonModule,
     SpeedDialComponent,
     SpeedDialStatesComponent,
-    UserMenuComponent,
+    HeaderComponent,
   ],
   template: `
     <div class="min-h-screen bg-background">
       <!-- Header -->
-      <header class="border-b border-border bg-card sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <mat-icon class="text-primary">favorite_border</mat-icon>
-              <h1 class="text-2xl font-bold">FisioTrack</h1>
-            </div>
-            <nav class="flex items-center gap-4">
-              <a routerLink="/fisioterapeuta/dashboard" class="text-sm font-medium hover:text-primary transition-colors">
-                Dashboard
-              </a>
-              <a routerLink="/fisioterapeuta/agenda" class="text-sm font-medium hover:text-primary transition-colors">
-                Agenda
-              </a>
-              <a routerLink="/fisioterapeuta/pacientes" class="text-sm font-medium hover:text-primary transition-colors">
-                Pacientes
-              </a>
-              <app-user-menu
-                (changeInfo)="onChangeInfo()"
-                (logout)="logout()"
-              ></app-user-menu>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <app-header
+        [navLinks]="navLinks"
+        (changeInfo)="onChangeInfo()"
+        (logout)="logout()"
+      ></app-header>
 
       <main class="container mx-auto px-4 py-8">
         <!-- Page Header -->
@@ -184,6 +165,7 @@ interface HorarioSlot {
 
                       <!-- Botón Cobrar -->
                       <button
+                        *ngIf="slot.cita!.estadoFisio !== 'Cobrado' && slot.cita!.estadoFisio !== 'CobroPendiente'"
                         (click)="onCharge(slot.cita!)"
                         class="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-green-100 transition-colors text-green-600 hover:text-green-700"
                         title="Cobrar cita"
@@ -219,6 +201,13 @@ export class AgendaComponent implements OnInit, OnDestroy {
   horarios: HorarioSlot[] = [];
   private destroy$ = new Subject<void>();
   isLoading = false;
+
+  navLinks: NavLink[] = [
+    { label: 'Dashboard', route: '/fisioterapeuta/dashboard' },
+    { label: 'Agenda', route: '/fisioterapeuta/agenda' },
+    { label: 'Pacientes', route: '/fisioterapeuta/pacientes' },
+    { label: 'Historial de Cobros', route: '/fisioterapeuta/historial-cobros' },
+  ];
 
   horasDisponibles = [
     '08:00', '09:00', '10:00', '11:00', '12:00',
@@ -398,6 +387,8 @@ export class AgendaComponent implements OnInit, OnDestroy {
         return 'bg-blue-400';
       case 'cobrado':
         return 'bg-green-400';
+      case 'cobropendiente':
+        return 'bg-orange-400';
       case 'canceladafisio':
         return 'bg-red-400';
       default:
@@ -425,6 +416,11 @@ export class AgendaComponent implements OnInit, OnDestroy {
     // Verde si está cobrado
     if (estadoFisio === 'cobrado') {
       return 'bg-green-100 border-green-300';
+    }
+
+    // Naranja si está pendiente de cobro (pago con tarjeta pendiente)
+    if (estadoFisio === 'cobropendiente') {
+      return 'bg-orange-100 border-orange-300';
     }
 
     // Rojo si al menos uno está cancelado
@@ -546,8 +542,18 @@ export class AgendaComponent implements OnInit, OnDestroy {
   }
 
   onCharge(cita: Appointment) {
-    // Cambiar estado del fisio a Cobrado
-    this.changeAppointmentStatusFisio(cita.id, 'Cobrado');
+    // Abrir el modal de cobro
+    const dialogRef = this.dialog.open(CobroModalComponent, {
+      width: '600px',
+      data: { cita },
+    });
+
+    dialogRef.afterClosed().subscribe(payment => {
+      if (payment) {
+        // El pago fue exitoso, recargar los horarios
+        this.loadHorarios();
+      }
+    });
   }
 
   saveCita(data: any) {

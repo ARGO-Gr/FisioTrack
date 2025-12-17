@@ -6,25 +6,45 @@ import { ButtonComponent } from '../../../components/ui/button.component';
 import { InMemoryDatabaseService } from '../../../shared/in-memory-db/in-memory.service';
 import { Rutina } from '../../../shared/models';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { UserMenuComponent } from '../../../shared/components/user-menu.component';
+import { HeaderComponent, NavLink } from '../../../shared/components/header.component';
 import { AuthService } from '../../../shared/services/auth.service';
 import { AppointmentService, Appointment } from '../../../shared/services/appointment.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { ProgramaService, ProgramaDetalleDto } from '../../../shared/services/programa.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmCancelModalComponent } from '../../../shared/components/confirm-cancel-modal.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-paciente-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, CardComponent, CardHeaderComponent, CardTitleComponent, CardDescriptionComponent, CardContentComponent, ButtonComponent, MatIconModule, UserMenuComponent],
+  imports: [CommonModule, RouterLink, CardComponent, CardHeaderComponent, CardTitleComponent, CardDescriptionComponent, CardContentComponent, ButtonComponent, MatIconModule, MatButtonModule, UserMenuComponent, HeaderComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class PacienteDashboardComponent implements OnInit, OnDestroy {
+  navLinks: NavLink[] = [
+    { label: 'Dashboard', route: '/paciente/dashboard' },
+    { label: 'Mi Rutina', route: '/paciente/rutinas' },
+    { label: 'Mis Citas', route: '/paciente/citas' },
+    { label: 'Pagos', route: '/paciente/pagos-pendientes' },
+  ];
   rutinas: Rutina[] = [];
   citasProximas: Appointment[] = [];
   loading = true;
   pacienteId: string = '';
+  programaActivo: ProgramaDetalleDto | null = null;
+  resumenPrograma = {
+    nombre: '',
+    diasCompletados: 0,
+    diasTotales: 0,
+    progreso: 0,
+    semanaActual: 1,
+    totalSemanas: 1
+  };
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -32,7 +52,9 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private appointmentService: AppointmentService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private dialog: MatDialog,
+    private programaService: ProgramaService
   ) {}
 
   ngOnInit() {
@@ -47,6 +69,9 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
       
       // Cargar citas próximas
       this.cargarCitasProximas();
+      
+      // Cargar programa activo
+      this.cargarProgramaActivo();
     }
   }
 
@@ -76,6 +101,28 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error cargando citas:', error);
+        }
+      });
+  }
+
+  cargarProgramaActivo() {
+    this.programaService.obtenerProgramaActivoPaciente()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (programa) => {
+          this.programaActivo = programa;
+          this.resumenPrograma = {
+            nombre: programa.nombre,
+            diasCompletados: programa.diasCompletados,
+            diasTotales: programa.diasTotales,
+            progreso: programa.diasTotales > 0 ? Math.round((programa.diasCompletados / programa.diasTotales) * 100) : 0,
+            semanaActual: programa.semanaActual,
+            totalSemanas: programa.totalSemanas
+          };
+        },
+        error: (error) => {
+          console.error('Error cargando programa:', error);
+          // No mostrar error si no hay programa activo
         }
       });
   }
@@ -113,6 +160,99 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  getColorFisio(estado: string): string {
+    switch (estado?.toLowerCase()) {
+      case 'pendiente':
+        return 'bg-yellow-400';
+      case 'confirmadofisio':
+        return 'bg-blue-400';
+      case 'cobrado':
+        return 'bg-green-400';
+      case 'cobropendiente':
+        return 'bg-orange-400';
+      case 'canceladafisio':
+        return 'bg-red-400';
+      default:
+        return 'bg-gray-400';
+    }
+  }
+
+  getColorPaciente(estado: string): string {
+    switch (estado?.toLowerCase()) {
+      case 'pendiente':
+        return 'bg-yellow-400';
+      case 'confirmadopaciente':
+        return 'bg-blue-400';
+      case 'canceladapaciente':
+        return 'bg-orange-400';
+      default:
+        return 'bg-gray-400';
+    }
+  }
+
+  puedeConfirmar(cita: Appointment): boolean {
+    const estadoFisio = cita.estadoFisio?.toLowerCase();
+    const estadoPaciente = cita.estadoPaciente?.toLowerCase();
+    // Puede confirmar si no está cobrada y el paciente no ha confirmado
+    // Permite confirmar incluso si el paciente canceló (para reactivar la cita)
+    return estadoFisio !== 'canceladafisio' && 
+           estadoFisio !== 'cobrado' && 
+           estadoFisio !== 'cobropendiente' &&
+           estadoPaciente !== 'confirmadopaciente';
+  }
+
+  puedeCancelar(cita: Appointment): boolean {
+    const estadoFisio = cita.estadoFisio?.toLowerCase();
+    const estadoPaciente = cita.estadoPaciente?.toLowerCase();
+    return estadoFisio !== 'canceladafisio' && 
+           estadoFisio !== 'cobrado' &&
+           estadoFisio !== 'cobropendiente' &&
+           estadoPaciente !== 'canceladapaciente';
+  }
+
+  openConfirmModal(cita: Appointment) {
+    this.appointmentService.changeAppointmentStatusPaciente(cita.id, 'ConfirmadoPaciente')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.toastService.success('Cita confirmada exitosamente');
+          this.cargarCitasProximas();
+        },
+        error: (error) => {
+          this.toastService.error('Error al confirmar la cita');
+          console.error('Error:', error);
+        }
+      });
+  }
+
+  openCancelConfirm(cita: Appointment) {
+    const dialogRef = this.dialog.open(ConfirmCancelModalComponent, {
+      width: '400px',
+      data: {
+        paciente: 'tu',
+        fecha: new Date(cita.fecha),
+        hora: cita.hora,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.appointmentService.changeAppointmentStatusPaciente(cita.id, 'CanceladaPaciente')
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.toastService.success('Cita cancelada exitosamente');
+              this.cargarCitasProximas();
+            },
+            error: (error) => {
+              this.toastService.error('Error al cancelar la cita');
+              console.error('Error:', error);
+            }
+          });
+      }
+    });
+  }
+
   onChangeInfo(): void {
     // TODO: Implementar modal para cambiar información del usuario
     console.log('Cambiar información - pendiente de implementar');
@@ -120,7 +260,6 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/']);
   }
 
   ngOnDestroy(): void {

@@ -19,17 +19,11 @@ import { takeUntil } from 'rxjs/operators';
     MatDialogModule,
     MatIconModule,
     MatButtonModule,
-    CardComponent,
-    CardHeaderComponent,
-    CardTitleComponent,
-    CardContentComponent,
-    CalendarModalComponent,
-    MonthPickerModalComponent,
   ],
   template: `
-    <div class="p-6">
+    <div [class]="pestanaActiva === 'mes' ? 'p-6 pb-2' : 'p-6'">
       <!-- Tabs -->
-      <div class="flex gap-4 mb-6 border-b border-border">
+      <div class="flex gap-4 mb-1 border-b border-border">
         <button
           (click)="cambiarPestana('dia')"
           [class.border-b-2]="pestanaActiva === 'dia'"
@@ -50,10 +44,10 @@ import { takeUntil } from 'rxjs/operators';
         </button>
       </div>
 
-      <h2 class="text-2xl font-bold mb-4 text-foreground">Resumen del {{ pestanaActiva === 'dia' ? 'Día' : 'Mes' }}</h2>
+      <h2 class="text-2xl font-bold mb-2 text-foreground">Resumen del {{ pestanaActiva === 'dia' ? 'Día' : 'Mes' }}</h2>
       
       <!-- Date/Month Selector -->
-      <div class="flex justify-center mb-6">
+      <div class="flex justify-center mb-2">
         <button
           (click)="abrirSelectorFecha()"
           class="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
@@ -69,40 +63,76 @@ import { takeUntil } from 'rxjs/operators';
       </div>
 
       <!-- Stats -->
-      <div class="space-y-3 mb-6">
-        <div class="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-          <span class="text-sm text-muted-foreground">Total de Citas</span>
-          <span class="text-2xl font-bold text-foreground">{{ totalCitasFiltradas }}</span>
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <div class="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+          <span class="text-xs text-muted-foreground">Total</span>
+          <span class="text-lg font-bold text-foreground">{{ totalCitasFiltradas }}</span>
         </div>
         
-        <div class="flex items-center justify-between p-4 rounded-lg bg-yellow-100 border-2 border-yellow-300">
-          <span class="text-sm text-muted-foreground">Pendientes</span>
-          <span class="text-2xl font-bold text-yellow-700">{{ amarillasFiltradas }}</span>
+        <div class="flex items-center justify-between p-2 rounded-lg bg-yellow-100 border border-yellow-300">
+          <span class="text-xs text-muted-foreground">Pendientes</span>
+          <span class="text-lg font-bold text-yellow-700">{{ amarillasFiltradas }}</span>
         </div>
         
-        <div class="flex items-center justify-between p-4 rounded-lg bg-blue-100 border-2 border-blue-300">
-          <span class="text-sm text-muted-foreground">Confirmadas</span>
-          <span class="text-2xl font-bold text-blue-700">{{ azulesFiltradas }}</span>
+        <div class="flex items-center justify-between p-2 rounded-lg bg-blue-100 border border-blue-300">
+          <span class="text-xs text-muted-foreground">Confirmadas</span>
+          <span class="text-lg font-bold text-blue-700">{{ azulesFiltradas }}</span>
         </div>
         
-        <div class="flex items-center justify-between p-4 rounded-lg bg-green-100 border-2 border-green-300">
-          <span class="text-sm text-muted-foreground">Cobradas</span>
-          <span class="text-2xl font-bold text-green-700">{{ verdesFiltradas }}</span>
+        <div class="flex items-center justify-between p-2 rounded-lg bg-green-100 border border-green-300">
+          <span class="text-xs text-muted-foreground">Cobradas</span>
+          <span class="text-lg font-bold text-green-700">{{ verdesFiltradas }}</span>
         </div>
         
-        <div class="flex items-center justify-between p-4 rounded-lg bg-red-100 border-2 border-red-300">
-          <span class="text-sm text-muted-foreground">Canceladas</span>
-          <span class="text-2xl font-bold text-red-700">{{ rojasFiltradas }}</span>
+        <div class="flex items-center justify-between p-2 rounded-lg bg-orange-100 border border-orange-300">
+          <span class="text-xs text-muted-foreground">Cobro Pendiente</span>
+          <span class="text-lg font-bold text-orange-700">{{ naranjasFiltradas }}</span>
+        </div>
+        
+        <div class="flex items-center justify-between p-2 rounded-lg bg-red-100 border border-red-300">
+          <span class="text-xs text-muted-foreground">Canceladas</span>
+          <span class="text-lg font-bold text-red-700">{{ rojasFiltradas }}</span>
         </div>
       </div>
 
-      <!-- Close Button -->
-      <button 
-        (click)="cerrarDialog()"
-        class="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg py-2 font-semibold transition-colors"
-      >
-        Cerrar
-      </button>
+      <!-- Calendario del Mes (solo visible en pestaña mes) -->
+      <div *ngIf="pestanaActiva === 'mes'">
+        <!-- Weekday Headers -->
+        <div class="grid grid-cols-7 gap-1 mb-2">
+          <div class="text-center font-semibold text-xs text-muted-foreground p-1">Lun</div>
+          <div class="text-center font-semibold text-xs text-muted-foreground p-1">Mar</div>
+          <div class="text-center font-semibold text-xs text-muted-foreground p-1">Mié</div>
+          <div class="text-center font-semibold text-xs text-muted-foreground p-1">Jue</div>
+          <div class="text-center font-semibold text-xs text-muted-foreground p-1">Vie</div>
+          <div class="text-center font-semibold text-xs text-muted-foreground p-1">Sab</div>
+          <div class="text-center font-semibold text-xs text-muted-foreground p-1">Dom</div>
+        </div>
+
+        <!-- Calendar Days -->
+        <div class="grid grid-cols-7 gap-1">
+          <div *ngFor="let day of calendarDays" class="day-cell">
+            <div
+              *ngIf="day"
+              class="w-full h-12 rounded border bg-white border-gray-300 flex flex-col items-center justify-center transition-all text-xs"
+            >
+              <span class="font-semibold text-foreground text-xs">{{ day.getDate() }}</span>
+              <!-- Dots for appointments -->
+              <div *ngIf="getAppointmentsForDate(day).length > 0" class="flex gap-0.5 mt-0.5 flex-wrap justify-center px-0.5">
+                <div
+                  *ngFor="let appointment of getAppointmentsForDate(day)"
+                  [class]="'w-1.5 h-1.5 rounded-full ' +
+                    (getAppointmentStatus(appointment) === 'completed' ? 'bg-green-500' : '') +
+                    (getAppointmentStatus(appointment) === 'confirmed' ? 'bg-blue-500' : '') +
+                    (getAppointmentStatus(appointment) === 'pending-payment' ? 'bg-orange-500' : '') +
+                    (getAppointmentStatus(appointment) === 'pending' ? 'bg-yellow-500' : '') +
+                    (getAppointmentStatus(appointment) === 'canceled' ? 'bg-red-500' : '')"
+                ></div>
+              </div>
+            </div>
+            <div *ngIf="!day" class="w-full h-12 rounded"></div>
+          </div>
+        </div>
+      </div>
     </div>
   `,
 })
@@ -114,11 +144,13 @@ export class ResumenCitasModalComponent implements OnInit, OnDestroy {
   amarillasFiltradas = 0;
   azulesFiltradas = 0;
   verdesFiltradas = 0;
+  naranjasFiltradas = 0;
   rojasFiltradas = 0;
 
   todasLasCitas: Appointment[] = [];
   cargando = false;
   fisioterapeutaId: string = '';
+  calendarDays: (Date | null)[] = [];
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -226,12 +258,14 @@ export class ResumenCitasModalComponent implements OnInit, OnDestroy {
           this.todasLasCitas = citas;
           console.log('✓ Citas del mes cargadas:', citas.length);
           this.calcularEstadisticas();
+          this.generarCalendario();
           this.cargando = false;
         },
         error: (error) => {
           console.error('Error cargando citas del mes:', error);
           this.todasLasCitas = [];
           this.calcularEstadisticas();
+          this.generarCalendario();
           this.cargando = false;
         }
       });
@@ -245,6 +279,7 @@ export class ResumenCitasModalComponent implements OnInit, OnDestroy {
     this.amarillasFiltradas = citasFiltradas.filter(c => this.isEstadoPendiente(c)).length;
     this.azulesFiltradas = citasFiltradas.filter(c => this.isEstadoConfirmada(c)).length;
     this.verdesFiltradas = citasFiltradas.filter(c => this.isEstadoCobrada(c)).length;
+    this.naranjasFiltradas = citasFiltradas.filter(c => this.isEstadoCobroPendiente(c)).length;
     this.rojasFiltradas = citasFiltradas.filter(c => this.isEstadoCancelada(c)).length;
 
     console.log('📊 Estadísticas calculadas:', {
@@ -252,6 +287,7 @@ export class ResumenCitasModalComponent implements OnInit, OnDestroy {
       pendientes: this.amarillasFiltradas,
       confirmadas: this.azulesFiltradas,
       cobradas: this.verdesFiltradas,
+      cobroPendiente: this.naranjasFiltradas,
       canceladas: this.rojasFiltradas
     });
   }
@@ -265,6 +301,10 @@ export class ResumenCitasModalComponent implements OnInit, OnDestroy {
 
   isEstadoCobrada(cita: Appointment): boolean {
     return cita.estadoFisio?.toLowerCase() === 'cobrado';
+  }
+
+  isEstadoCobroPendiente(cita: Appointment): boolean {
+    return cita.estadoFisio?.toLowerCase() === 'cobropendiente';
   }
 
   isEstadoCancelada(cita: Appointment): boolean {
@@ -281,6 +321,7 @@ export class ResumenCitasModalComponent implements OnInit, OnDestroy {
 
   isEstadoPendiente(cita: Appointment): boolean {
     return !this.isEstadoCobrada(cita) && 
+           !this.isEstadoCobroPendiente(cita) &&
            !this.isEstadoCancelada(cita) && 
            !this.isEstadoConfirmada(cita);
   }
@@ -288,6 +329,10 @@ export class ResumenCitasModalComponent implements OnInit, OnDestroy {
   getCitaColor(cita: Appointment): string {
     if (this.isEstadoCobrada(cita)) {
       return 'bg-green-100 border-green-300';
+    }
+
+    if (this.isEstadoCobroPendiente(cita)) {
+      return 'bg-orange-100 border-orange-300';
     }
 
     if (this.isEstadoCancelada(cita)) {
@@ -299,6 +344,54 @@ export class ResumenCitasModalComponent implements OnInit, OnDestroy {
     }
 
     return 'bg-yellow-100 border-yellow-300';
+  }
+
+  generarCalendario(): void {
+    this.calendarDays = [];
+    const year = this.fechaSeleccionada.getFullYear();
+    const month = this.fechaSeleccionada.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const startDate = new Date(firstDay);
+    // Ajustar al lunes (0 = domingo, 1 = lunes)
+    const dayOfWeek = startDate.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    startDate.setDate(startDate.getDate() + diff);
+
+    for (let i = 0; i < 42; i++) {
+      if (i > 0) startDate.setDate(startDate.getDate() + 1);
+      const date = new Date(startDate);
+      if (date.getMonth() === month) {
+        this.calendarDays.push(new Date(date));
+      } else {
+        this.calendarDays.push(null);
+      }
+    }
+  }
+
+  getAppointmentsForDate(date: Date | null): Appointment[] {
+    if (!date) return [];
+    const dateStr = date.toISOString().split('T')[0];
+    return this.todasLasCitas.filter(apt => {
+      const aptDate = new Date(apt.fecha).toISOString().split('T')[0];
+      return aptDate === dateStr;
+    });
+  }
+
+  getAppointmentStatus(appointment: Appointment): string {
+    if (appointment.estadoFisio === 'Cobrado') {
+      return 'completed';
+    }
+    if (appointment.estadoFisio === 'CobroPendiente') {
+      return 'pending-payment';
+    }
+    if (appointment.estadoFisio === 'CanceladaFisio' || appointment.estadoPaciente === 'CanceladaPaciente') {
+      return 'canceled';
+    }
+    if (appointment.estadoFisio === 'ConfirmadoFisio' && appointment.estadoPaciente === 'ConfirmadoPaciente') {
+      return 'confirmed';
+    }
+    return 'pending';
   }
 
   cerrarDialog(): void {

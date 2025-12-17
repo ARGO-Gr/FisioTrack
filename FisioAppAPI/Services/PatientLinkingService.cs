@@ -109,6 +109,31 @@ public class PatientLinkingService : IPatientLinkingService
                         .Where(a => a.PacienteId == user.Id && a.FisioterapeutaId == fisioterapeutaId)
                         .CountAsync();
 
+                    // Obtener programa activo y calcular progreso
+                    var programaActivo = await _context.ProgramasRehabilitacion
+                        .Include(p => p.Semanas)
+                            .ThenInclude(s => s.Dias)
+                        .FirstOrDefaultAsync(p => p.PacienteId == user.Id && p.Activo);
+
+                    int diasCompletados = 0;
+                    int diasTotales = 0;
+                    double porcentajeProgreso = 0;
+                    bool tieneProgramaActivo = false;
+
+                    if (programaActivo != null)
+                    {
+                        tieneProgramaActivo = true;
+                        diasCompletados = programaActivo.Semanas
+                            .SelectMany(s => s.Dias)
+                            .Count(d => d.Completado);
+
+                        diasTotales = programaActivo.Semanas
+                            .SelectMany(s => s.Dias)
+                            .Count(d => d.Tipo != TipoDia.Descanso);
+
+                        porcentajeProgreso = diasTotales > 0 ? Math.Round((double)diasCompletados / diasTotales * 100, 2) : 0;
+                    }
+
                     patients.Add(new LinkedPatientDto
                     {
                         Id = user.Id.ToString(),
@@ -117,7 +142,11 @@ public class PatientLinkingService : IPatientLinkingService
                         Telefono = user.Telefono,
                         FechaNacimiento = user.FechaNacimiento,
                         FechaIngreso = link.FechaIngreso,
-                        RutinasHistorial = rutinasCount
+                        RutinasHistorial = rutinasCount,
+                        DiasCompletados = diasCompletados,
+                        DiasTotales = diasTotales,
+                        PorcentajeProgreso = porcentajeProgreso,
+                        TieneProgramaActivo = tieneProgramaActivo
                     });
                 }
             }

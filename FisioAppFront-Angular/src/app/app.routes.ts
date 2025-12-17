@@ -40,20 +40,12 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/fisioterapeuta/pacientes/pacientes.component').then(m => m.PacientesComponent),
       },
       {
-        path: 'pacientes/:id/progreso',
-        loadComponent: () => import('./pages/fisioterapeuta/pacientes/patient-progress/patient-progress.component').then(m => m.PatientProgressComponent),
-      },
-      {
-        path: 'crear-rutina',
-        loadComponent: () => import('./pages/fisioterapeuta/crear-rutina/crear-rutina.component').then(m => m.CrearRutinaComponent),
-      },
-      {
-        path: 'planificar-rutina',
-        loadComponent: () => import('./pages/fisioterapeuta/planificar-rutina/planificar-rutina.component').then(m => m.PlanificarRutinaComponent),
-      },
-      {
         path: 'agenda',
         loadComponent: () => import('./pages/fisioterapeuta/agenda/agenda.component').then(m => m.AgendaComponent),
+      },
+      {
+        path: 'historial-cobros',
+        loadComponent: () => import('./pages/fisioterapeuta/historial-cobros/historial-cobros.component').then(m => m.HistorialCobrosComponent),
       },
     ],
   },
@@ -77,6 +69,10 @@ export const routes: Routes = [
       {
         path: 'citas',
         loadComponent: () => import('./pages/paciente/citas/mis-citas.component').then(m => m.MisCitasComponent),
+      },
+      {
+        path: 'pagos-pendientes',
+        loadComponent: () => import('./pages/paciente/pagos/pagos-pendientes.component').then(m => m.PagosPendientesComponent),
       },
     ],
   },

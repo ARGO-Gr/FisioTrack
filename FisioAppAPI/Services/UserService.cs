@@ -434,4 +434,14 @@ public class UserService : IUserService
             return null;
         }
     }
+
+    public async Task<User?> GetUserByEmailAsync(string email)
+    {
+        return await _repo.FindByEmailAsync(email);
+    }
+
+    public async Task UpdateUserAsync(User user)
+    {
+        await _repo.UpdateAsync(user);
+    }
 }

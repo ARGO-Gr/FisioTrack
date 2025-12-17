@@ -24,7 +24,6 @@ import { MatDividerModule } from '@angular/material/divider';
         <mat-icon>edit</mat-icon>
         <span>Cambiar información</span>
       </button>
-      <mat-divider></mat-divider>
       <button mat-menu-item (click)="onLogout()">
         <mat-icon class="text-red-500">logout</mat-icon>
         <span class="text-red-500">Cerrar sesión</span>

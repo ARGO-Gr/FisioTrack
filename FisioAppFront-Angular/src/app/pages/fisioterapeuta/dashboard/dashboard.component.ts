@@ -4,13 +4,13 @@ import { RouterLink, Router } from '@angular/router';
 import { CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent } from '../../../components/ui/card.component';
 import { InMemoryDatabaseService } from '../../../shared/in-memory-db/in-memory.service';
 import { AuthService } from '../../../shared/services/auth.service';
-import { AppointmentService, Appointment } from '../../../shared/services/appointment.service';
+import { AppointmentService, Appointment, LinkedPatientDto } from '../../../shared/services/appointment.service';
 import { Paciente, Rutina, Cita } from '../../../shared/models';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { ResumenCitasModalComponent } from '../../../shared/components/dialogs/resumen-citas-modal.component';
-import { UserMenuComponent } from '../../../shared/components/user-menu.component';
+import { HeaderComponent, NavLink } from '../../../shared/components/header.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -26,7 +26,7 @@ import { takeUntil } from 'rxjs/operators';
     CardContentComponent,
     MatIconModule,
     MatButtonModule,
-    UserMenuComponent,
+    HeaderComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -37,8 +37,16 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
   citas: Cita[] = [];
   proximasCitas: Appointment[] = [];
   todasLasCitas: Appointment[] = [];
+  pacientesVinculados: LinkedPatientDto[] = [];
   loading = true;
   private destroy$ = new Subject<void>();
+
+  navLinks: NavLink[] = [
+    { label: 'Dashboard', route: '/fisioterapeuta/dashboard' },
+    { label: 'Agenda', route: '/fisioterapeuta/agenda' },
+    { label: 'Pacientes', route: '/fisioterapeuta/pacientes' },
+    { label: 'Historial de Cobros', route: '/fisioterapeuta/historial-cobros' },
+  ];
 
   constructor(
     private db: InMemoryDatabaseService,
@@ -62,9 +70,12 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
     
     // Cargar las próximas 5 citas del día actual
     this.loadProximasCitas();
+    
+    // Cargar pacientes vinculados
+    this.loadPacientesVinculados();
   }
 
-  loadProximasCitas() {
+  loadPacientesVinculados() {
     const fisioterapeutaId = this.authService.getUserId();
     
     if (!fisioterapeutaId) {
@@ -72,12 +83,40 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const hoy = new Date().toISOString().split('T')[0];
+    this.appointmentService.getLinkedPatients(fisioterapeutaId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (pacientes) => {
+          this.pacientesVinculados = pacientes;
+        },
+        error: (error) => {
+          console.error('Error loading pacientes vinculados:', error);
+        }
+      });
+  }
+
+  loadProximasCitas() {
+    const fisioterapeutaId = this.authService.getUserId();
+    
+    console.log('🔍 loadProximasCitas - fisioterapeutaId:', fisioterapeutaId);
+    
+    if (!fisioterapeutaId) {
+      console.error('❌ No fisioterapeuta ID available');
+      return;
+    }
+
+    // Usar fecha local en lugar de UTC
+    const ahora = new Date();
+    const hoy = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+    console.log('📅 Fecha actual (hoy):', hoy);
     
     this.appointmentService.getAppointmentsByDay(fisioterapeutaId, hoy)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (citas: Appointment[]) => {
+          console.log('✅ Citas recibidas del backend:', citas);
+          console.log('📊 Número de citas:', citas.length);
+          
           // Guardar todas las citas del día
           this.todasLasCitas = citas;
           
@@ -86,19 +125,25 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
           const horaActual = ahora.getHours().toString().padStart(2, '0') + ':' + 
                             ahora.getMinutes().toString().padStart(2, '0');
           
+          console.log('⏰ Hora actual:', horaActual);
+          
           // Filtrar citas desde la hora actual en adelante
           const citasValidas = citas.filter(c => c.hora >= horaActual);
+          console.log('✔️ Citas válidas (desde hora actual):', citasValidas.length, citasValidas);
           
-          // Filtrar solo citas amarillas (pendientes) y azules (ambas confirmadas)
+          // Filtrar solo citas amarillas (pendientes), azules (ambas confirmadas) y naranjas (cobro pendiente)
           this.proximasCitas = citasValidas
             .filter(c => {
               const citaColor = this.getCitaColor(c);
-              return citaColor.includes('yellow') || citaColor.includes('blue');
+              return citaColor.includes('yellow') || citaColor.includes('blue') || citaColor.includes('orange');
             })
             .slice(0, 5);
+          
+          console.log('🎯 Próximas citas filtradas:', this.proximasCitas.length, this.proximasCitas);
         },
         error: (error) => {
-          console.error('Error loading próximas citas:', error);
+          console.error('❌ Error loading próximas citas:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
         }
       });
   }
@@ -116,6 +161,8 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
         return 'bg-blue-400';
       case 'cobrado':
         return 'bg-green-400';
+      case 'cobropendiente':
+        return 'bg-orange-400';
       case 'canceladafisio':
         return 'bg-red-400';
       default:
@@ -143,6 +190,11 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
     // Verde si está cobrado
     if (estadoFisio === 'cobrado') {
       return 'bg-green-100 border-green-300';
+    }
+
+    // Naranja si está con cobro pendiente
+    if (estadoFisio === 'cobropendiente') {
+      return 'bg-orange-100 border-orange-300';
     }
 
     // Rojo si al menos uno está cancelado
@@ -182,6 +234,27 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
         // El modal cargará las citas desde la API cuando seleccione una fecha
       },
     });
+  }
+
+  getInitials(nombre: string): string {
+    return nombre
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
+  calculateAge(fechaNacimiento?: Date): number {
+    if (!fechaNacimiento) return 0;
+    const today = new Date();
+    const birthDate = new Date(fechaNacimiento);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   }
 
   onChangeInfo(): void {

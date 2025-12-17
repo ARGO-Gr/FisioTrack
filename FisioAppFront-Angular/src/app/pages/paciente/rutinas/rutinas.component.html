@@ -1,35 +1,38 @@
 <div class="min-h-screen bg-background">
   <!-- Header Navigation -->
-  <header class="border-b border-border bg-card sticky top-0 z-50">
-    <div class="container mx-auto px-4 py-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <mat-icon class="text-primary">favorite_border</mat-icon>
-          <h1 class="text-2xl font-bold">FisioTrack</h1>
-        </div>
-        <nav class="flex items-center gap-4">
-          <a routerLink="/paciente/dashboard" class="text-sm font-medium hover:text-primary transition-colors">
-            Dashboard
-          </a>
-          <a routerLink="/paciente/rutinas" class="text-sm font-medium hover:text-primary transition-colors">
-            Mis Rutinas
-          </a>
-          <a routerLink="/paciente/citas" class="text-sm font-medium hover:text-primary transition-colors">
-            Mis Citas
-          </a>
-          <app-user-menu
-            (changeInfo)="onChangeInfo()"
-            (logout)="logout()"
-          ></app-user-menu>
-        </nav>
-      </div>
-    </div>
-  </header>
+  <app-header
+    [navLinks]="navLinks"
+    (changeInfo)="onChangeInfo()"
+    (logout)="logout()"
+  ></app-header>
 
   <main class="container mx-auto px-6 lg:px-12 py-8">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <div class="animate-spin mb-4 mx-auto">
+          <mat-icon class="text-primary text-5xl">refresh</mat-icon>
+        </div>
+        <p class="text-muted-foreground">Cargando tu programa de rehabilitación...</p>
+      </div>
+    </div>
+
+    <!-- No Program State -->
+    <div *ngIf="!loading && !programaActivo" class="flex items-center justify-center py-20">
+      <app-card class="max-w-md">
+        <app-card-content class="p-12 text-center">
+          <mat-icon class="text-muted-foreground mx-auto mb-4 opacity-50 text-5xl">inbox</mat-icon>
+          <h3 class="text-xl font-semibold mb-2">No tienes un programa activo</h3>
+          <p class="text-muted-foreground">Tu fisioterapeuta aún no te ha asignado un programa de rehabilitación.</p>
+        </app-card-content>
+      </app-card>
+    </div>
+
+    <!-- Program Content -->
+    <div *ngIf="!loading && programaActivo">
     <!-- Program Header -->
     <div class="mb-8">
-      <h2 class="text-4xl font-bold text-foreground mb-2">{{ programa.nombre }}</h2>
+      <h2 class="text-4xl font-bold text-foreground mb-8"> {{ programa.nombre }} </h2>
       <p class="text-muted-foreground">{{ programa.descripcion }}</p>
     </div>
 
@@ -141,11 +144,15 @@
     <div class="space-y-4 mb-12">
       <app-card
         *ngFor="let dia of semanaActual.dias; let i = index"
-        [ngClass]="dia.completado
-          ? 'border-green-300/50 bg-green-50/50'
-          : dia.tipo === 'descanso'
-            ? 'border-blue-300/50 bg-blue-50/50'
-            : ''"
+        [ngClass]="dia.incumplimiento
+          ? 'border-red-300/50 bg-red-50/50'
+          : dia.bloqueado
+            ? 'border-gray-300/50 bg-gray-50/50 opacity-75'
+            : dia.completado
+              ? 'border-green-300/50 bg-green-50/50'
+              : dia.tipo === 'descanso'
+                ? 'border-blue-300/50 bg-blue-50/50'
+                : ''"
       >
         <app-card-content class="p-6">
           <div class="flex items-center justify-between gap-4">
@@ -155,10 +162,18 @@
                 [ngClass]="getDiaColor(dia)"
                 class="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
               >
-                <mat-icon class="text-2xl">{{ getDiaIcono(dia) }}</mat-icon>
+                <mat-icon >{{ getDiaIcono(dia) }}</mat-icon>
               </div>
               <div class="flex-1">
                 <h4 class="text-xl font-bold text-foreground mb-1">{{ dia.dia }}</h4>
+                <!-- Mostrar estado de incumplimiento -->
+                <div *ngIf="dia.incumplimiento" class="text-base text-red-600 font-medium mb-2">
+                  ⚠️ Incumplimiento registrado
+                </div>
+                <!-- Mostrar estado de bloqueo -->
+                <div *ngIf="dia.bloqueado && !dia.incumplimiento" class="text-base text-gray-600 font-medium mb-2">
+                  🔒 Día bloqueado - Completa días anteriores primero
+                </div>
                 <div *ngIf="dia.tipo === 'rutina'" class="space-y-1">
                   <p class="text-base text-muted-foreground">{{ dia.nombre }}</p>
                   <div class="flex items-center gap-4 text-sm text-muted-foreground">
@@ -186,8 +201,12 @@
                 <mat-icon>check_circle</mat-icon>
                 <span class="font-medium">Completado</span>
               </div>
+              <div *ngIf="dia.incumplimiento" class="flex items-center gap-2 text-red-600">
+                <mat-icon>cancel</mat-icon>
+                <span class="font-medium">Incumplido</span>
+              </div>
               <div *ngIf="!dia.completado && dia.tipo === 'rutina' && !esdiaPosterior(i)">
-                <a [routerLink]="['/paciente/rutinas', semanaActual.numero + '-' + (i + 1)]">
+                <a [routerLink]="['/paciente/rutinas', dia.id]">
                   <app-button size="lg">
                     <mat-icon class="mr-2">play_arrow</mat-icon>
                     Iniciar Rutina
@@ -197,13 +216,23 @@
               <div *ngIf="!dia.completado && dia.tipo === 'descanso'" class="text-muted-foreground font-medium">
                 Descanso
               </div>
-              <div *ngIf="!dia.completado && dia.tipo === 'rutina' && esdiaPosterior(i)" class="text-muted-foreground font-medium">
-                Bloqueado
+              <div *ngIf="!dia.completado && dia.tipo === 'rutina' && esdiaPosterior(i)" class="flex items-center gap-3">
+                <a [routerLink]="['/paciente/rutinas', dia.id]" [queryParams]="{soloVista: true}">
+                  <app-button variant="outline" size="lg">
+                    <mat-icon class="mr-2">visibility</mat-icon>
+                    Ver Ejercicios
+                  </app-button>
+                </a>
+                <div class="flex items-center gap-2 text-muted-foreground">
+                  <mat-icon>{{ dia.bloqueado ? 'lock' : 'schedule' }}</mat-icon>
+                  <span class="font-medium">{{ dia.bloqueado ? 'Bloqueado' : 'Próximo' }}</span>
+                </div>
               </div>
             </div>
           </div>
         </app-card-content>
       </app-card>
+    </div>
     </div>
   </main>
 </div>

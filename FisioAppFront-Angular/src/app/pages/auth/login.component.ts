@@ -102,7 +102,7 @@ type UserType = 'patient' | 'physiotherapist';
               >
                 <span *ngIf="!isLoading">Iniciar Sesión</span>
                 <span *ngIf="isLoading" class="flex items-center gap-2">
-                  <mat-icon class="animate-spin !size-4">refresh</mat-icon>
+                  <mat-icon class="animate-spin">refresh</mat-icon>
                   Cargando...
                 </span>
               </app-button>

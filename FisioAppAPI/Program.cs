@@ -94,6 +94,10 @@ builder.Services.AddScoped<FisioAppAPI.Interfaces.IPhysiotherapistService, Fisio
 builder.Services.AddScoped<FisioAppAPI.Interfaces.IAppointmentRepository, FisioAppAPI.Repositories.AppointmentRepository>();
 builder.Services.AddScoped<FisioAppAPI.Interfaces.IAppointmentService, FisioAppAPI.Services.AppointmentService>();
 builder.Services.AddScoped<FisioAppAPI.Interfaces.IPatientLinkingService, FisioAppAPI.Services.PatientLinkingService>();
+builder.Services.AddScoped<FisioAppAPI.Interfaces.IProgramaRepository, FisioAppAPI.Repositories.ProgramaRepository>();
+builder.Services.AddScoped<FisioAppAPI.Interfaces.IProgramaService, FisioAppAPI.Services.ProgramaService>();
+builder.Services.AddScoped<FisioAppAPI.Interfaces.IPaymentRepository, FisioAppAPI.Repositories.PaymentRepository>();
+builder.Services.AddScoped<FisioAppAPI.Interfaces.IPaymentService, FisioAppAPI.Services.PaymentService>();
 
 var app = builder.Build();
 

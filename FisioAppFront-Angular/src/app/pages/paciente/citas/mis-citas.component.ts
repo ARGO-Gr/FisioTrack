@@ -4,13 +4,13 @@ import { RouterLink, Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
-import { CardComponent, CardHeaderComponent, CardTitleComponent, CardDescriptionComponent, CardContentComponent } from '../../../components/ui/card.component';
-import { ButtonComponent } from '../../../components/ui/button.component';
+import { CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComponent } from '../../../components/ui/card.component';
+import { HeaderComponent, NavLink } from '../../../shared/components/header.component';
 import { AuthService } from '../../../shared/services/auth.service';
 import { AppointmentService, Appointment } from '../../../shared/services/appointment.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { UserMenuComponent } from '../../../shared/components/user-menu.component';
-import { SpeedDialStatesComponent, ConfirmCancelModalComponent } from '../../../shared/components';
+import { ConfirmCancelModalComponent } from '../../../shared/components';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -26,16 +26,20 @@ import { takeUntil } from 'rxjs/operators';
     CardComponent,
     CardHeaderComponent,
     CardTitleComponent,
-    CardDescriptionComponent,
     CardContentComponent,
-    ButtonComponent,
     UserMenuComponent,
-    SpeedDialStatesComponent,
+    HeaderComponent,
   ],
   templateUrl: './mis-citas.component.html',
   styleUrl: './mis-citas.component.scss',
 })
 export class MisCitasComponent implements OnInit, OnDestroy {
+  navLinks: NavLink[] = [
+    { label: 'Dashboard', route: '/paciente/dashboard' },
+    { label: 'Mi Rutina', route: '/paciente/rutinas' },
+    { label: 'Mis Citas', route: '/paciente/citas' },
+    { label: 'Pagos', route: '/paciente/pagos-pendientes' },
+  ];
   filtroActivo: 'proximas' | 'canceladas' = 'proximas';
   todasLasCitas: Appointment[] = [];
   citasFiltradas: Appointment[] = [];
@@ -115,18 +119,28 @@ export class MisCitasComponent implements OnInit, OnDestroy {
     const estadoFisio = cita.estadoFisio?.toLowerCase();
     const estadoPaciente = cita.estadoPaciente?.toLowerCase();
 
-    // Verde si está confirmada
-    if (estadoFisio === 'confirmadofisio' && estadoPaciente === 'confirmadopaciente') {
-      return 'border-l-4 border-l-blue-500 bg-blue-50';
+    // Verde si está cobrado
+    if (estadoFisio === 'cobrado') {
+      return 'bg-green-100 border-green-300';
     }
 
-    // Rojo si está cancelada
+    // Naranja si está con cobro pendiente
+    if (estadoFisio === 'cobropendiente') {
+      return 'bg-orange-100 border-orange-300';
+    }
+
+    // Rojo si al menos uno está cancelado
     if (estadoFisio === 'canceladafisio' || estadoPaciente === 'canceladapaciente') {
-      return 'border-l-4 border-l-red-500 bg-red-50';
+      return 'bg-red-100 border-red-300';
     }
 
-    // Amarillo si está pendiente
-    return 'border-l-4 border-l-yellow-500 bg-yellow-50';
+    // Azul si ambos están confirmados
+    if (estadoFisio === 'confirmadofisio' && estadoPaciente === 'confirmadopaciente') {
+      return 'bg-blue-100 border-blue-300';
+    }
+
+    // Amarillo si al menos uno está pendiente
+    return 'bg-yellow-100 border-yellow-300';
   }
 
   getEstadoBadgeClass(cita: Appointment): string {
@@ -196,6 +210,27 @@ export class MisCitasComponent implements OnInit, OnDestroy {
     }
   }
 
+  puedeCancelar(cita: Appointment): boolean {
+    const estadoFisio = cita.estadoFisio?.toLowerCase();
+    const estadoPaciente = cita.estadoPaciente?.toLowerCase();
+    // No puede cancelar si ya está cancelada o cobrada
+    return estadoFisio !== 'canceladafisio' && 
+           estadoPaciente !== 'canceladapaciente' &&
+           estadoFisio !== 'cobrado' &&
+           estadoFisio !== 'cobropendiente';
+  }
+
+  puedeConfirmar(cita: Appointment): boolean {
+    const estadoFisio = cita.estadoFisio?.toLowerCase();
+    const estadoPaciente = cita.estadoPaciente?.toLowerCase();
+    // Puede confirmar si no está cobrada y el paciente no ha confirmado
+    // Permite confirmar incluso si el paciente canceló (para reactivar la cita)
+    return estadoFisio !== 'canceladafisio' && 
+           estadoFisio !== 'cobrado' &&
+           estadoFisio !== 'cobropendiente' &&
+           estadoPaciente !== 'confirmadopaciente';
+  }
+
   openCancelConfirm(cita: Appointment): void {
     const dialogRef = this.dialog.open(ConfirmCancelModalComponent, {
       width: '400px',
@@ -214,15 +249,7 @@ export class MisCitasComponent implements OnInit, OnDestroy {
   }
 
   openConfirmModal(cita: Appointment): void {
-    // Solo permitir confirmar si la cita no está cancelada
-    const estadoFisio = cita.estadoFisio?.toLowerCase();
-    const estadoPaciente = cita.estadoPaciente?.toLowerCase();
-    
-    if (estadoFisio === 'canceladafisio' || estadoPaciente === 'canceladapaciente') {
-      this.toastService.error('No se puede confirmar una cita cancelada');
-      return;
-    }
-    
+    // Cambiar estado del paciente a ConfirmadoPaciente
     this.changeAppointmentStatusPaciente(cita.id, 'ConfirmadoPaciente');
   }
 
@@ -247,7 +274,6 @@ export class MisCitasComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/']);
   }
 
   ngOnDestroy() {

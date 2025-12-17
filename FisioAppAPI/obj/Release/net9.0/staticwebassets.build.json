@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "q3dPWVQLeFc/bucjwGFEBbfccCUT2dt5pW45lDs3flo=",
+  "Source": "FisioAppAPI",
+  "BasePath": "_content/FisioAppAPI",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

@@ -55,6 +55,10 @@ export interface LinkedPatientDto {
   fechaNacimiento?: Date;
   fechaIngreso: Date;
   rutinasHistorial: number;
+  diasCompletados: number;
+  diasTotales: number;
+  porcentajeProgreso: number;
+  tieneProgramaActivo: boolean;
 }
 
 export interface LinkPatientDto {

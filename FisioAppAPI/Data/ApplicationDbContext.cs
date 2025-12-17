@@ -11,6 +11,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<PhysiotherapistProfile> PhysiotherapistProfiles { get; set; } = null!;
     public DbSet<Appointment> Appointments { get; set; } = null!;
     public DbSet<PatientLink> PatientLinks { get; set; } = null!;
+    public DbSet<Payment> Payments { get; set; } = null!;
+    public DbSet<ProgramaRehabilitacion> ProgramasRehabilitacion { get; set; } = null!;
+    public DbSet<SemanaRutina> SemanasRutina { get; set; } = null!;
+    public DbSet<DiaRutina> DiasRutina { get; set; } = null!;
+    public DbSet<Ejercicio> Ejercicios { get; set; } = null!;
+    public DbSet<ProgresoEjercicio> ProgresoEjercicios { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -104,6 +110,122 @@ public class ApplicationDbContext : DbContext
             // Constraint único: un fisioterapeuta no puede vincular el mismo paciente dos veces (activo)
             entity.HasIndex(pl => new { pl.FisioterapeutaId, pl.PacienteId })
                   .IsUnique(false); // Permite múltiples, pero historiales
+        });
+
+        modelBuilder.Entity<ProgramaRehabilitacion>(entity =>
+        {
+            entity.ToTable("ProgramaRehabilitacion");
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.PacienteId).IsRequired();
+            entity.Property(p => p.FisioterapeutaId).IsRequired();
+            entity.Property(p => p.Nombre).IsRequired().HasMaxLength(200);
+            entity.Property(p => p.Descripcion).HasMaxLength(1000);
+            entity.Property(p => p.Diagnostico).IsRequired().HasMaxLength(500);
+            entity.Property(p => p.FechaInicio).IsRequired();
+            entity.Property(p => p.FechaFin).IsRequired();
+            entity.Property(p => p.TotalSemanas).IsRequired();
+            entity.Property(p => p.SemanaActual).IsRequired().HasDefaultValue(1);
+            entity.Property(p => p.Activo).IsRequired().HasDefaultValue(true);
+            entity.Property(p => p.FechaCreacion).HasDefaultValueSql("GETUTCDATE()");
+
+            // Configurar relaciones explícitamente para evitar ciclos de cascada
+            entity.HasOne(p => p.Paciente)
+                  .WithMany()
+                  .HasForeignKey(p => p.PacienteId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(p => p.Fisioterapeuta)
+                  .WithMany()
+                  .HasForeignKey(p => p.FisioterapeutaId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(p => p.PacienteId);
+            entity.HasIndex(p => p.FisioterapeutaId);
+            entity.HasIndex(p => new { p.PacienteId, p.Activo });
+        });
+
+        modelBuilder.Entity<SemanaRutina>(entity =>
+        {
+            entity.ToTable("SemanaRutina");
+            entity.HasKey(s => s.Id);
+            entity.Property(s => s.ProgramaId).IsRequired();
+            entity.Property(s => s.NumeroSemana).IsRequired();
+            entity.Property(s => s.FechaCreacion).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(s => s.Programa)
+                  .WithMany(p => p.Semanas)
+                  .HasForeignKey(s => s.ProgramaId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(s => s.ProgramaId);
+        });
+
+        modelBuilder.Entity<DiaRutina>(entity =>
+        {
+            entity.ToTable("DiaRutina");
+            entity.HasKey(d => d.Id);
+            entity.Property(d => d.SemanaId).IsRequired();
+            entity.Property(d => d.NombreDia).IsRequired().HasMaxLength(20);
+            entity.Property(d => d.OrdenDia).IsRequired();
+            entity.Property(d => d.Tipo).IsRequired();
+            entity.Property(d => d.NombreRutina).HasMaxLength(200);
+            entity.Property(d => d.Completado).IsRequired().HasDefaultValue(false);
+            entity.Property(d => d.FechaCreacion).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(d => d.Semana)
+                  .WithMany(s => s.Dias)
+                  .HasForeignKey(d => d.SemanaId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(d => d.SemanaId);
+        });
+
+        modelBuilder.Entity<Ejercicio>(entity =>
+        {
+            entity.ToTable("Ejercicio");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DiaRutinaId).IsRequired();
+            entity.Property(e => e.Orden).IsRequired();
+            entity.Property(e => e.Nombre).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Descripcion).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Repeticiones).IsRequired();
+            entity.Property(e => e.TiempoDescanso).IsRequired();
+            entity.Property(e => e.InstruccionesJson).IsRequired();
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(e => e.DiaRutina)
+                  .WithMany(d => d.Ejercicios)
+                  .HasForeignKey(e => e.DiaRutinaId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.DiaRutinaId);
+        });
+
+        modelBuilder.Entity<ProgresoEjercicio>(entity =>
+        {
+            entity.ToTable("ProgresoEjercicio");
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.EjercicioId).IsRequired();
+            entity.Property(p => p.DiaRutinaId).IsRequired();
+            entity.Property(p => p.PacienteId).IsRequired();
+            entity.Property(p => p.Completado).IsRequired().HasDefaultValue(false);
+            entity.Property(p => p.Notas).HasMaxLength(1000);
+            entity.Property(p => p.FechaCreacion).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasOne(p => p.Ejercicio)
+                  .WithMany(e => e.Progresos)
+                  .HasForeignKey(p => p.EjercicioId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(p => p.DiaRutina)
+                  .WithMany(d => d.Progresos)
+                  .HasForeignKey(p => p.DiaRutinaId)
+                  .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasIndex(p => p.EjercicioId);
+            entity.HasIndex(p => p.DiaRutinaId);
+            entity.HasIndex(p => p.PacienteId);
+            entity.HasIndex(p => new { p.EjercicioId, p.PacienteId });
         });
     }
 }

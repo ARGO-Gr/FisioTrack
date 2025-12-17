@@ -9,12 +9,16 @@ import { ButtonComponent } from '../../../components/ui/button.component';
 import { AuthService } from '../../../shared/services/auth.service';
 import { AppointmentService, LinkedPatientDto, LinkPatientDto } from '../../../shared/services/appointment.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { ProgramaService, ProgramaDetalleDto } from '../../../shared/services/programa.service';
 import { AddPatientModalComponent } from '../../../shared/components/add-patient-modal.component';
-import { AssignRoutineModalComponent } from '../../../shared/components/assign-routine-modal.component';
+import { AssignRoutineModalComponent } from './asignar rutina/assign-routine-modal.component';
 import { ConfirmDeleteModalComponent, ConfirmDeleteData } from '../../../shared/components/confirm-delete-modal.component';
-import { UserMenuComponent } from '../../../shared/components/user-menu.component';
+import { PatientProgressModalComponent } from './patient-progress/patient-progress-modal.component';
+import { PatientAppointmentsModalComponent } from './patient-appointments/patient-appointments-modal.component';
+import { HeaderComponent, NavLink } from '../../../shared/components/header.component';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface PacienteVinculado extends LinkedPatientDto {
   // Extendemos el DTO con propiedades adicionales si las necesitamos
@@ -34,36 +38,16 @@ interface PacienteVinculado extends LinkedPatientDto {
     CardTitleComponent,
     CardContentComponent,
     ButtonComponent,
-    UserMenuComponent,
+    HeaderComponent,
   ],
   template: `
     <div class="min-h-screen bg-background">
       <!-- Header -->
-      <header class="border-b border-border bg-card sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <mat-icon class="text-primary">favorite_border</mat-icon>
-              <h1 class="text-2xl font-bold">FisioTrack</h1>
-            </div>
-            <nav class="flex items-center gap-4">
-              <a routerLink="/fisioterapeuta/dashboard" class="text-sm font-medium hover:text-primary transition-colors">
-                Dashboard
-              </a>
-              <a routerLink="/fisioterapeuta/agenda" class="text-sm font-medium hover:text-primary transition-colors">
-                Agenda
-              </a>
-              <a routerLink="/fisioterapeuta/pacientes" class="text-sm font-medium hover:text-primary transition-colors">
-                Pacientes
-              </a>
-              <app-user-menu
-                (changeInfo)="onChangeInfo()"
-                (logout)="logout()"
-              ></app-user-menu>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <app-header
+        [navLinks]="navLinks"
+        (changeInfo)="onChangeInfo()"
+        (logout)="logout()"
+      ></app-header>
 
       <main class="container mx-auto px-4 py-8">
         <!-- Page Header -->
@@ -138,6 +122,28 @@ interface PacienteVinculado extends LinkedPatientDto {
                         </div>
                       </div>
 
+                      <!-- Barra de Progreso -->
+                      <div *ngIf="paciente.tieneProgramaActivo" class="mt-4 space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                          <span class="text-muted-foreground">Progreso del Programa</span>
+                          <span class="font-medium text-foreground">
+                            {{ paciente.diasCompletados }}/{{ paciente.diasTotales }} días ({{ paciente.porcentajeProgreso }}%)
+                          </span>
+                        </div>
+                        <div class="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div
+                            class="bg-primary h-full transition-all duration-300"
+                            [style.width.%]="paciente.porcentajeProgreso"
+                          ></div>
+                        </div>
+                      </div>
+                      <div *ngIf="!paciente.tieneProgramaActivo" class="mt-4">
+                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                          <mat-icon class="text-base">info</mat-icon>
+                          <span>Sin programa activo</span>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 </app-card-content>
@@ -161,39 +167,9 @@ interface PacienteVinculado extends LinkedPatientDto {
           <div class="lg:col-span-1">
             <div *ngIf="selectedPaciente; else noSelection" class="sticky top-24">
               <app-card>
-                <app-card-header>
-                  <app-card-title>Detalles del Paciente</app-card-title>
-                </app-card-header>
                 <app-card-content class="space-y-6">
-                  <!-- Personal Info -->
-                  <div>
-                    <h4 class="font-semibold text-foreground mb-2">Información Personal</h4>
-                    <div class="space-y-2 text-sm">
-                      <div class="flex justify-between">
-                        <span class="text-muted-foreground">Nombre:</span>
-                        <span class="font-medium text-foreground">{{ selectedPaciente.nombre }}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-muted-foreground">Edad:</span>
-                        <span class="font-medium text-foreground">{{ calculateAge(selectedPaciente.fechaNacimiento) }} años</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-muted-foreground">Teléfono:</span>
-                        <span class="font-medium text-foreground">{{ selectedPaciente.telefono || 'N/A' }}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-muted-foreground">Email:</span>
-                        <span class="font-medium text-foreground text-xs truncate">{{ selectedPaciente.email }}</span>
-                      </div>
-                      <div class="flex justify-between">
-                        <span class="text-muted-foreground">Fecha Ingreso:</span>
-                        <span class="font-medium text-foreground">{{ formatDate(selectedPaciente.fechaIngreso) }}</span>
-                      </div>
-                    </div>
-                  </div>
-
                   <!-- Action Buttons -->
-                  <div class="mt-5 space-y-2 pt-4 border-t border-border">
+                  <div class="space-y-2 border-border">
                     <button
                       (click)="navigateToProgress()"
                       class="w-full px-4 py-3 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors font-medium flex items-center justify-center gap-2"
@@ -203,11 +179,19 @@ interface PacienteVinculado extends LinkedPatientDto {
                     </button>
 
                     <button
+                      (click)="navigateToAppointments()"
+                      class="w-full px-4 py-3 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors font-medium flex items-center justify-center gap-2"
+                    >
+                      <mat-icon>event</mat-icon>
+                      Ver Calendario de Citas
+                    </button>
+
+                    <button
                       (click)="openAssignRoutineModal()"
                       class="w-full px-4 py-3 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors font-medium flex items-center justify-center gap-2"
                     >
                       <mat-icon>fitness_center</mat-icon>
-                      Asignar Rutina
+                      {{ programaActivo ? 'Rutina' : 'Asignar Rutina' }}
                     </button>
 
                     <button
@@ -226,7 +210,7 @@ interface PacienteVinculado extends LinkedPatientDto {
               <app-card class="sticky top-24">
                 <app-card-content class="p-12 text-center">
                   <mat-icon class="text-muted-foreground mx-auto mb-4 opacity-50">person</mat-icon>
-                  <p class="text-muted-foreground">Selecciona un paciente para ver sus detalles</p>
+                  <p class="text-muted-foreground">Selecciona un paciente para ver sus opciones</p>
                 </app-card-content>
               </app-card>
             </ng-template>
@@ -239,14 +223,23 @@ interface PacienteVinculado extends LinkedPatientDto {
 export class PacientesComponent implements OnInit, OnDestroy {
   pacientes: PacienteVinculado[] = [];
   selectedPaciente: PacienteVinculado | null = null;
+  programaActivo: ProgramaDetalleDto | null = null;
   searchTerm = '';
   loading = true;
   fisioterapeutaId: string = '';
   private destroy$ = new Subject<void>();
 
+  navLinks: NavLink[] = [
+    { label: 'Dashboard', route: '/fisioterapeuta/dashboard' },
+    { label: 'Agenda', route: '/fisioterapeuta/agenda' },
+    { label: 'Pacientes', route: '/fisioterapeuta/pacientes' },
+    { label: 'Historial de Cobros', route: '/fisioterapeuta/historial-cobros' },
+  ];
+
   constructor(
     private appointmentService: AppointmentService,
     private authService: AuthService,
+    private programaService: ProgramaService,
     private router: Router,
     private dialog: MatDialog,
     private toastService: ToastService
@@ -293,6 +286,23 @@ export class PacientesComponent implements OnInit, OnDestroy {
 
   selectPaciente(paciente: PacienteVinculado) {
     this.selectedPaciente = paciente;
+    this.programaActivo = null;
+    
+    // Verificar si el paciente tiene una rutina activa
+    this.programaService
+      .obtenerProgramaActivoPorPaciente(paciente.id)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(() => of(null))
+      )
+      .subscribe({
+        next: (programa) => {
+          this.programaActivo = programa;
+        },
+        error: () => {
+          this.programaActivo = null;
+        }
+      });
   }
 
   openAddPatientModal() {
@@ -340,15 +350,18 @@ export class PacientesComponent implements OnInit, OnDestroy {
       data: {
         pacienteName: this.selectedPaciente.nombre,
         pacienteId: this.selectedPaciente.id,
+        programaActivo: this.programaActivo,
       },
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // Aquí puedes enviar los datos a tu API para guardar la rutina
-        console.log('Routine data:', result);
-        this.toastService.success('Rutina asignada exitosamente');
-        // TODO: Implementar la llamada API para guardar la rutina
+      if (result && result.success) {
+        console.log('Programa creado/actualizado:', result.programa);
+        this.toastService.success(result.mensaje || 'Programa de rehabilitación guardado exitosamente');
+        // Recargar programa activo
+        if (this.selectedPaciente) {
+          this.selectPaciente(this.selectedPaciente);
+        }
       }
     });
   }
@@ -440,7 +453,31 @@ export class PacientesComponent implements OnInit, OnDestroy {
       this.toastService.error('Selecciona un paciente primero');
       return;
     }
-    this.router.navigate([`/fisioterapeuta/pacientes/${this.selectedPaciente.id}/progreso`]);
+    
+    const dialogRef = this.dialog.open(PatientProgressModalComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      data: {
+        pacienteId: this.selectedPaciente.id,
+        nombrePaciente: this.selectedPaciente.nombre
+      }
+    });
+  }
+
+  navigateToAppointments() {
+    if (!this.selectedPaciente) {
+      this.toastService.error('Selecciona un paciente primero');
+      return;
+    }
+    
+    const dialogRef = this.dialog.open(PatientAppointmentsModalComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      data: {
+        pacienteId: this.selectedPaciente.id,
+        nombrePaciente: this.selectedPaciente.nombre
+      }
+    });
   }
 
   ngOnDestroy() {

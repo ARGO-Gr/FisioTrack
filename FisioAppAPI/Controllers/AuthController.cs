@@ -171,4 +171,101 @@ public class AuthController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    // ENDPOINT TEMPORAL PARA CREAR USUARIOS DE PRUEBA
+    [HttpPost("seed-test-users")]
+    public async Task<IActionResult> SeedTestUsers()
+    {
+        try
+        {
+            var testUsers = new List<RegisterDto>
+            {
+                new RegisterDto
+                {
+                    FullName = "Dr. Juan Pérez",
+                    Email = "juan.perez@fisiotrack.com",
+                    Password = "Fisio123!",
+                    Telefono = "555-0101",
+                    FechaNacimiento = new DateTime(1980, 5, 15)
+                },
+                new RegisterDto
+                {
+                    FullName = "Dra. María González",
+                    Email = "maria.gonzalez@fisiotrack.com",
+                    Password = "Fisio123!",
+                    Telefono = "555-0102",
+                    FechaNacimiento = new DateTime(1985, 8, 20)
+                },
+                new RegisterDto
+                {
+                    FullName = "Carlos Ramírez",
+                    Email = "carlos.ramirez@email.com",
+                    Password = "Paciente123!",
+                    Telefono = "555-0201",
+                    FechaNacimiento = new DateTime(1990, 3, 10)
+                },
+                new RegisterDto
+                {
+                    FullName = "Ana Martínez",
+                    Email = "ana.martinez@email.com",
+                    Password = "Paciente123!",
+                    Telefono = "555-0202",
+                    FechaNacimiento = new DateTime(1992, 7, 25)
+                },
+                new RegisterDto
+                {
+                    FullName = "Luis Torres",
+                    Email = "luis.torres@email.com",
+                    Password = "Paciente123!",
+                    Telefono = "555-0203",
+                    FechaNacimiento = new DateTime(1988, 11, 5)
+                },
+                new RegisterDto
+                {
+                    FullName = "Laura Sánchez",
+                    Email = "laura.sanchez@email.com",
+                    Password = "Paciente123!",
+                    Telefono = "555-0204",
+                    FechaNacimiento = new DateTime(1995, 2, 18)
+                }
+            };
+
+            var createdUsers = new List<object>();
+
+            foreach (var userDto in testUsers)
+            {
+                try
+                {
+                    await _userService.RegisterAsync(userDto);
+                    // Auto-confirmar el usuario (SOLO PARA TESTING)
+                    var user = await _userService.GetUserByEmailAsync(userDto.Email);
+                    if (user != null)
+                    {
+                        user.IsConfirmed = true;
+                        user.ConfirmationToken = null;
+                        await _userService.UpdateUserAsync(user);
+                        createdUsers.Add(new { 
+                            fullName = user.FullName, 
+                            email = user.Email,
+                            password = userDto.Password
+                        });
+                    }
+                }
+                catch (InvalidOperationException)
+                {
+                    // Usuario ya existe, continuar
+                    continue;
+                }
+            }
+
+            return Ok(new { 
+                message = $"Se crearon {createdUsers.Count} usuarios de prueba", 
+                users = createdUsers 
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

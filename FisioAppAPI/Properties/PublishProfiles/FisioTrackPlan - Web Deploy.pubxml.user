@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+This file is used by the publish/package process of your Web project. You can customize the behavior of this process
+by editing this MSBuild file. In order to learn more about this please visit https://go.microsoft.com/fwlink/?LinkID=208121. 
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <History>False|2025-12-12T21:25:01.4084293Z||;False|2025-12-12T14:13:37.5431631-07:00||;False|2025-12-12T14:09:14.2048469-07:00||;False|2025-12-12T14:08:24.5408334-07:00||;False|2025-12-12T14:04:49.1625225-07:00||;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="DefaultConnection">
+      <Value>Server=tcp:fisiotrack-server.database.windows.net,1433%3bInitial Catalog=FisioTrackDB%3bPersist Security Info=False%3bUser ID=sqladmin%3bPassword=0m4r.g3r4rd0.ru1z%3bMultipleActiveResultSets=False%3bEncrypt=True%3bTrustServerCertificate=False%3bConnection Timeout=30%3b</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>

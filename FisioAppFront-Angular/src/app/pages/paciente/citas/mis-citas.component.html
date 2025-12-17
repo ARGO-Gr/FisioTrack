@@ -1,35 +1,11 @@
 <div class="min-h-screen bg-background">
-  <!-- Header Navigation -->
-  <header class="border-b border-border bg-card sticky top-0 z-50">
-    <div class="container mx-auto px-4 py-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <mat-icon class="text-primary">favorite_border</mat-icon>
-          <h1 class="text-2xl font-bold">FisioTrack</h1>
-        </div>
-        <nav class="flex items-center gap-4">
-          <a routerLink="/paciente/dashboard" class="text-sm font-medium hover:text-primary transition-colors">
-            Dashboard
-          </a>
-          <a routerLink="/paciente/rutinas" class="text-sm font-medium hover:text-primary transition-colors">
-            Mis Rutinas
-          </a>
-          <a routerLink="/paciente/citas" class="text-sm font-medium hover:text-primary transition-colors">
-            Mis Citas
-          </a>
-          <app-user-menu
-            (changeInfo)="onChangeInfo()"
-            (logout)="logout()"
-          ></app-user-menu>
-        </nav>
-      </div>
-    </div>
-  </header>
+  <app-header [navLinks]="navLinks" (changeInfo)="onChangeInfo()" (logout)="logout()"></app-header>
 
   <main class="container mx-auto px-4 py-8">
     <!-- Page Header -->
     <div class="mb-8">
-      <h2 class="text-4xl font-bold text-foreground mb-2">Mis Citas</h2>
+      
+      <h2 class="text-4xl font-bold text-foreground mb-8">Mis Citas</h2>
       <p class="text-muted-foreground">Gestiona tus citas con tu fisioterapeuta</p>
     </div>
 
@@ -57,32 +33,45 @@
 
     <!-- Citas List -->
     <div *ngIf="!cargando && citasFiltradas.length > 0; else noCitas" class="space-y-4">
-      <app-card
+      <div
         *ngFor="let cita of citasFiltradas"
+        class="p-4 rounded-lg border-2"
         [ngClass]="getCitaColor(cita)"
       >
-        <app-card-header>
+        <div class="mb-4">
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
-                <app-card-title>{{ cita.descripcion }}</app-card-title>
+                <h3 class="text-lg font-semibold text-foreground">{{ cita.descripcion }}</h3>
                 <span [ngClass]="'px-3 py-1 rounded-full text-sm font-medium ' + getEstadoBadgeClass(cita)">
                   {{ getEstadoText(cita) }}
                 </span>
               </div>
-              <app-card-description>Cita con tu fisioterapeuta</app-card-description>
+              <p class="text-sm text-muted-foreground">Cita con tu fisioterapeuta</p>
             </div>
-            <!-- Speed Dial de Estados - Esquina Superior Derecha -->
-            <div class="flex-shrink-0 ml-4">
-              <app-speed-dial-states
-                (confirm)="openConfirmModal(cita)"
-                (cancel)="openCancelConfirm(cita)"
-              ></app-speed-dial-states>
+            <!-- Botones de Acción -->
+            <div class="flex items-center gap-2 ml-4">
+              <button
+                *ngIf="puedeConfirmar(cita)"
+                (click)="openConfirmModal(cita)"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium"
+              >
+                <mat-icon>check_circle</mat-icon>
+                Confirmar
+              </button>
+              <button
+                *ngIf="puedeCancelar(cita)"
+                (click)="openCancelConfirm(cita)"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 transition-colors font-medium"
+              >
+                <mat-icon>cancel</mat-icon>
+                Cancelar
+              </button>
             </div>
           </div>
-        </app-card-header>
+        </div>
 
-        <app-card-content class="space-y-4">
+        <div class="space-y-4">
           <!-- Información de la cita -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Fecha -->
@@ -151,8 +140,8 @@
               <p class="text-sm text-muted-foreground">{{ cita.descripcion }}</p>
             </div>
           </div>
-        </app-card-content>
-      </app-card>
+        </div>
+      </div>
     </div>
 
     <!-- No citas message -->

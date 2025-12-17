@@ -36,7 +36,8 @@ public enum AppointmentStatusFisio
     Pendiente = 0,
     ConfirmadoFisio = 1,
     Cobrado = 2,
-    CanceladaFisio = 3
+    CanceladaFisio = 3,
+    CobroPendiente = 4
 }
 
 public enum AppointmentStatusPaciente

@@ -216,8 +216,15 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem('auth_token');
+    localStorage.clear(); // Limpiar todo localStorage
     this.tokenSubject.next(null);
     this.userRoleSubject.next(null);
+    sessionStorage.clear(); // Limpiar sessionStorage también
+    
+    // Redirigir a home
+    if (typeof window !== 'undefined') {
+      window.location.href = '/';
+    }
   }
 
   isAuthenticated(): boolean {

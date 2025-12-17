@@ -30,7 +30,7 @@ import { MatIconModule } from '@angular/material/icon';
         <!-- Warning Icon -->
         <div class="flex justify-center mb-8">
           <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-            <mat-icon class="text-orange-600 !size-8">block</mat-icon>
+            <mat-icon class="text-orange-600 ">block</mat-icon>
           </div>
         </div>
 
@@ -86,7 +86,7 @@ import { MatIconModule } from '@angular/material/icon';
           (click)="onConfirm()"
           class="flex-1 px-4 py-3 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
         >
-          <mat-icon class="!size-4">block</mat-icon>
+          <mat-icon >block</mat-icon>
           <span>Cancelar Cita</span>
         </button>
       </div>

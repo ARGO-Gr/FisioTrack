@@ -79,6 +79,98 @@ namespace FisioAppAPI.Migrations
                     b.ToTable("Appointment", (string)null);
                 });
 
+            modelBuilder.Entity("FisioAppAPI.Models.DiaRutina", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Completado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("FechaCompletado")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("NombreDia")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("NombreRutina")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("OrdenDia")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SemanaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SemanaId");
+
+                    b.ToTable("DiaRutina", (string)null);
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.Ejercicio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("DiaRutinaId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("InstruccionesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Repeticiones")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TiempoDescanso")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiaRutinaId");
+
+                    b.ToTable("Ejercicio", (string)null);
+                });
+
             modelBuilder.Entity("FisioAppAPI.Models.PatientLink", b =>
                 {
                     b.Property<Guid>("Id")
@@ -123,6 +215,71 @@ namespace FisioAppAPI.Migrations
                     b.HasIndex("FisioterapeutaId", "PacienteId");
 
                     b.ToTable("PatientLink", (string)null);
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.Payment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AppointmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Cambio")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("DescripcionCita")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmailPaciente")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly>("FechaCita")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("FechaPago")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("FisioterapeutaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<TimeOnly>("HoraCita")
+                        .HasColumnType("time");
+
+                    b.Property<bool>("IsPendingPayment")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MetodoPago")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MontoPagado")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("NombrePaciente")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Notas")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NumeroAutorizacion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NumeroTarjeta")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PacienteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TitularTarjeta")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("FisioAppAPI.Models.PhysiotherapistProfile", b =>
@@ -171,6 +328,146 @@ namespace FisioAppAPI.Migrations
                         .IsUnique();
 
                     b.ToTable("PhysiotherapistProfile", (string)null);
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.ProgramaRehabilitacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Diagnostico")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("FechaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime>("FechaFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("FisioterapeutaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("PacienteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SemanaActual")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<int>("TotalSemanas")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FisioterapeutaId");
+
+                    b.HasIndex("PacienteId");
+
+                    b.HasIndex("PacienteId", "Activo");
+
+                    b.ToTable("ProgramaRehabilitacion", (string)null);
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.ProgresoEjercicio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Completado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("DiaRutinaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EjercicioId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FechaCompletado")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("Notas")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("PacienteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiaRutinaId");
+
+                    b.HasIndex("EjercicioId");
+
+                    b.HasIndex("PacienteId");
+
+                    b.HasIndex("EjercicioId", "PacienteId");
+
+                    b.ToTable("ProgresoEjercicio", (string)null);
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.SemanaRutina", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<int>("NumeroSemana")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProgramaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProgramaId");
+
+                    b.ToTable("SemanaRutina", (string)null);
                 });
 
             modelBuilder.Entity("FisioAppAPI.Models.User", b =>
@@ -235,6 +532,28 @@ namespace FisioAppAPI.Migrations
                     b.ToTable("User", (string)null);
                 });
 
+            modelBuilder.Entity("FisioAppAPI.Models.DiaRutina", b =>
+                {
+                    b.HasOne("FisioAppAPI.Models.SemanaRutina", "Semana")
+                        .WithMany("Dias")
+                        .HasForeignKey("SemanaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Semana");
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.Ejercicio", b =>
+                {
+                    b.HasOne("FisioAppAPI.Models.DiaRutina", "DiaRutina")
+                        .WithMany("Ejercicios")
+                        .HasForeignKey("DiaRutinaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiaRutina");
+                });
+
             modelBuilder.Entity("FisioAppAPI.Models.PhysiotherapistProfile", b =>
                 {
                     b.HasOne("FisioAppAPI.Models.User", null)
@@ -242,6 +561,85 @@ namespace FisioAppAPI.Migrations
                         .HasForeignKey("FisioAppAPI.Models.PhysiotherapistProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.ProgramaRehabilitacion", b =>
+                {
+                    b.HasOne("FisioAppAPI.Models.User", "Fisioterapeuta")
+                        .WithMany()
+                        .HasForeignKey("FisioterapeutaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FisioAppAPI.Models.User", "Paciente")
+                        .WithMany()
+                        .HasForeignKey("PacienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Fisioterapeuta");
+
+                    b.Navigation("Paciente");
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.ProgresoEjercicio", b =>
+                {
+                    b.HasOne("FisioAppAPI.Models.DiaRutina", "DiaRutina")
+                        .WithMany("Progresos")
+                        .HasForeignKey("DiaRutinaId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("FisioAppAPI.Models.Ejercicio", "Ejercicio")
+                        .WithMany("Progresos")
+                        .HasForeignKey("EjercicioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FisioAppAPI.Models.User", "Paciente")
+                        .WithMany()
+                        .HasForeignKey("PacienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiaRutina");
+
+                    b.Navigation("Ejercicio");
+
+                    b.Navigation("Paciente");
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.SemanaRutina", b =>
+                {
+                    b.HasOne("FisioAppAPI.Models.ProgramaRehabilitacion", "Programa")
+                        .WithMany("Semanas")
+                        .HasForeignKey("ProgramaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Programa");
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.DiaRutina", b =>
+                {
+                    b.Navigation("Ejercicios");
+
+                    b.Navigation("Progresos");
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.Ejercicio", b =>
+                {
+                    b.Navigation("Progresos");
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.ProgramaRehabilitacion", b =>
+                {
+                    b.Navigation("Semanas");
+                });
+
+            modelBuilder.Entity("FisioAppAPI.Models.SemanaRutina", b =>
+                {
+                    b.Navigation("Dias");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,5 @@
 using FisioAppAPI.DTOs;
+using FisioAppAPI.Models;
 
 namespace FisioAppAPI.Interfaces;
 
@@ -11,4 +12,6 @@ public interface IUserService
     Task<bool> UnlockUserAsync(UnlockUserDto dto);
     Task ResendUnlockCodeAsync(ResendUnlockCodeDto dto);
     Task SendPasswordAsync(SendPasswordDto dto);
+    Task<User?> GetUserByEmailAsync(string email);
+    Task UpdateUserAsync(User user);
 }
