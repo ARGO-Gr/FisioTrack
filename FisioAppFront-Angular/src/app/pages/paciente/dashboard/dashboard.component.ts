@@ -80,19 +80,35 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (citas: Appointment[]) => {
-          // Filtrar solo citas próximas (pendientes y confirmadas, sin canceladas)
+          const hoy = new Date();
+          hoy.setHours(0, 0, 0, 0); // Establecer a medianoche para comparación justa
+          
+          // Filtrar solo citas actuales o futuras (no pasadas), pendientes o confirmadas
           this.citasProximas = citas
             .filter(cita => {
-              const estadoFisio = cita.estadoFisio?.toLowerCase();
-              const estadoPaciente = cita.estadoPaciente?.toLowerCase();
-              return (estadoFisio === 'pendiente' || 
-                      estadoFisio === 'confirmadofisio' || 
-                      estadoPaciente === 'confirmadopaciente') &&
-                     estadoFisio !== 'canceladafisio' &&
-                     estadoPaciente !== 'canceladapaciente';
+              const estadoFisio = cita.estadoFisio?.toLowerCase() || '';
+              const estadoPaciente = cita.estadoPaciente?.toLowerCase() || '';
+              
+              // Parsear la fecha de la cita
+              const [year, month, day] = cita.fecha.split('-').map(Number);
+              const fechaCita = new Date(year, month - 1, day);
+              fechaCita.setHours(0, 0, 0, 0);
+              
+              // Excluir citas de días pasados
+              const noEstaEnPasado = fechaCita >= hoy;
+              
+              // Excluir citas canceladas
+              const noEstaaCancelada = !estadoFisio.includes('cancelada') && 
+                                       !estadoPaciente.includes('cancelada');
+              
+              // Incluir citas que estén en estado: pendiente, confirmada (ambos lados)
+              const esEstadoValido = (estadoFisio === 'pendiente' || estadoFisio === 'confirmadofisio') &&
+                                     (estadoPaciente === 'pendiente' || estadoPaciente === 'confirmadopaciente');
+              
+              return noEstaEnPasado && noEstaaCancelada && esEstadoValido;
             })
             .sort((a, b) => {
-              // Ordenar por fecha y hora
+              // Ordenar por fecha y hora (más próximas primero)
               const fechaA = new Date(`${a.fecha}T${a.hora}`);
               const fechaB = new Date(`${b.fecha}T${b.hora}`);
               return fechaA.getTime() - fechaB.getTime();

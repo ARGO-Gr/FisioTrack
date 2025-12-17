@@ -8,6 +8,7 @@ import { CardComponent, CardHeaderComponent, CardTitleComponent, CardContentComp
 import { HeaderComponent, NavLink } from '../../../shared/components/header.component';
 import { AuthService } from '../../../shared/services/auth.service';
 import { AppointmentService, Appointment } from '../../../shared/services/appointment.service';
+import { PaymentService } from '../../../shared/services/payment.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { UserMenuComponent } from '../../../shared/components/user-menu.component';
 import { ConfirmCancelModalComponent } from '../../../shared/components';
@@ -40,9 +41,9 @@ export class MisCitasComponent implements OnInit, OnDestroy {
     { label: 'Mis Citas', route: '/paciente/citas' },
     { label: 'Pagos', route: '/paciente/pagos-pendientes' },
   ];
-  filtroActivo: 'proximas' | 'canceladas' = 'proximas';
+  filtroActivo: 'proximas' | 'canceladas' | 'pasadas' | 'pagadas' = 'proximas';
   todasLasCitas: Appointment[] = [];
-  citasFiltradas: Appointment[] = [];
+  citasFiltradas: (Appointment & { monto?: number })[] = [];
   cargando = true;
   pacienteId: string = '';
   private destroy$ = new Subject<void>();
@@ -50,6 +51,7 @@ export class MisCitasComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private appointmentService: AppointmentService,
+    private paymentService: PaymentService,
     private router: Router,
     private dialog: MatDialog,
     private toastService: ToastService
@@ -88,31 +90,103 @@ export class MisCitasComponent implements OnInit, OnDestroy {
       });
   }
 
-  cambiarFiltro(filtro: 'proximas' | 'canceladas'): void {
+  cambiarFiltro(filtro: 'proximas' | 'canceladas' | 'pasadas' | 'pagadas'): void {
     this.filtroActivo = filtro;
     this.aplicarFiltro();
   }
 
   aplicarFiltro(): void {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
     if (this.filtroActivo === 'proximas') {
-      // Mostrar pendientes y confirmadas (excluir canceladas)
+      // Mostrar citas futuras que sean pendientes o confirmadas (excluir canceladas)
       this.citasFiltradas = this.todasLasCitas.filter(cita => {
         const estadoFisio = cita.estadoFisio?.toLowerCase();
         const estadoPaciente = cita.estadoPaciente?.toLowerCase();
-        return (estadoFisio === 'pendiente' || 
+        
+        // Verificar que sea fecha futura
+        const [year, month, day] = cita.fecha.split('-').map(Number);
+        const fechaCita = new Date(year, month - 1, day);
+        fechaCita.setHours(0, 0, 0, 0);
+        const esEnElFuturo = fechaCita >= hoy;
+        
+        return esEnElFuturo && 
+               (estadoFisio === 'pendiente' || 
                 estadoFisio === 'confirmadofisio' || 
                 estadoPaciente === 'confirmadopaciente') &&
                estadoFisio !== 'canceladafisio' &&
                estadoPaciente !== 'canceladapaciente';
       });
-    } else {
+    } else if (this.filtroActivo === 'canceladas') {
       // Mostrar canceladas (por fisio o por paciente)
       this.citasFiltradas = this.todasLasCitas.filter(cita => {
         const estadoFisio = cita.estadoFisio?.toLowerCase();
         const estadoPaciente = cita.estadoPaciente?.toLowerCase();
         return estadoFisio === 'canceladafisio' || estadoPaciente === 'canceladapaciente';
       });
+    } else if (this.filtroActivo === 'pasadas') {
+      // Mostrar citas pasadas que sean pendientes o confirmadas (no canceladas)
+      this.citasFiltradas = this.todasLasCitas.filter(cita => {
+        const estadoFisio = cita.estadoFisio?.toLowerCase();
+        const estadoPaciente = cita.estadoPaciente?.toLowerCase();
+        
+        // Verificar que sea fecha pasada
+        const [year, month, day] = cita.fecha.split('-').map(Number);
+        const fechaCita = new Date(year, month - 1, day);
+        fechaCita.setHours(0, 0, 0, 0);
+        const esEnElPasado = fechaCita < hoy;
+        
+        return esEnElPasado && 
+               (estadoFisio === 'pendiente' || 
+                estadoFisio === 'confirmadofisio' || 
+                estadoPaciente === 'confirmadopaciente') &&
+               estadoFisio !== 'canceladafisio' &&
+               estadoPaciente !== 'canceladapaciente';
+      });
+    } else if (this.filtroActivo === 'pagadas') {
+      // Mostrar citas pagadas con información de pago
+      this.cargarCitasPagadas();
     }
+  }
+
+  cargarCitasPagadas(): void {
+    this.cargando = true;
+    // Obtener todos los pagos del paciente (pendientes + completados)
+    this.paymentService
+      .getAllPaymentsByPatient()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (pagos: any[]) => {
+          // Filtrar solo pagos completados (cobrado)
+          const pagosCobrados = pagos.filter(pago => !pago.isPendingPayment);
+          
+          // Buscar las citas correspondientes en todasLasCitas
+          const citasConPagos: (Appointment & { monto?: number })[] = [];
+          for (const pago of pagosCobrados) {
+            const cita = this.todasLasCitas.find(c => c.id === pago.appointmentId);
+            if (cita) {
+              citasConPagos.push({
+                ...cita,
+                monto: pago.monto
+              });
+            }
+          }
+          this.citasFiltradas = citasConPagos;
+          
+          this.cargando = false;
+        },
+        error: (error) => {
+          console.error('Error cargando citas pagadas:', error);
+          this.citasFiltradas = [];
+          this.cargando = false;
+        }
+      });
+  }
+
+  formatearMonto(monto: number | undefined): string {
+    if (!monto) return '0.00';
+    return monto.toFixed(2);
   }
 
   getCitaColor(cita: Appointment): string {
@@ -212,6 +286,20 @@ export class MisCitasComponent implements OnInit, OnDestroy {
       default:
         return 'bg-gray-400';
     }
+  }
+
+  esCitaCanceladaPasada(cita: Appointment): boolean {
+    // Verificar si estamos en la sección de canceladas
+    if (this.filtroActivo !== 'canceladas') return false;
+    
+    // Verificar si la cita es en el pasado
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const [year, month, day] = cita.fecha.split('-').map(Number);
+    const fechaCita = new Date(year, month - 1, day);
+    fechaCita.setHours(0, 0, 0, 0);
+    
+    return fechaCita < hoy;
   }
 
   puedeCancelar(cita: Appointment): boolean {

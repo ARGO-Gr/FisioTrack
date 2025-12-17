@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<DiaRutina> DiasRutina { get; set; } = null!;
     public DbSet<Ejercicio> Ejercicios { get; set; } = null!;
     public DbSet<ProgresoEjercicio> ProgresoEjercicios { get; set; } = null!;
+    public DbSet<FollowupNote> FollowupNotes { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -252,6 +253,24 @@ public class ApplicationDbContext : DbContext
 
             entity.HasIndex(pc => pc.PacienteId);
             entity.HasIndex(pc => new { pc.PacienteId, pc.IsDefault });
+        });
+
+        modelBuilder.Entity<FollowupNote>(entity =>
+        {
+            entity.ToTable("FollowupNote");
+            entity.HasKey(fn => fn.Id);
+            entity.Property(fn => fn.AppointmentId).IsRequired();
+            entity.Property(fn => fn.Contenido)
+                  .IsRequired()
+                  .HasMaxLength(2000);
+            entity.Property(fn => fn.CreatedAt)
+                  .IsRequired()
+                  .HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(fn => fn.UpdatedAt)
+                  .IsRequired()
+                  .HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(fn => fn.AppointmentId).IsUnique();
         });
     }
 

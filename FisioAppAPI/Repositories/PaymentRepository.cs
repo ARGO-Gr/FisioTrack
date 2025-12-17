@@ -104,6 +104,16 @@ public class PaymentRepository : IPaymentRepository
         return payments.Select(MapToDto).ToList();
     }
 
+    public async Task<List<PaymentDto>> GetAllPaymentsByPacienteIdAsync(Guid pacienteId)
+    {
+        var payments = await _context.Payments
+            .Where(p => p.PacienteId == pacienteId)
+            .OrderByDescending(p => p.FechaPago)
+            .ToListAsync();
+
+        return payments.Select(MapToDto).ToList();
+    }
+
     public async Task<Payment?> GetPaymentByIdForPatientAsync(Guid paymentId, Guid pacienteId)
     {
         return await _context.Payments

@@ -10,6 +10,7 @@ public interface IPaymentRepository
     Task<PaymentDto?> GetPaymentByIdAsync(Guid paymentId, Guid fisioterapeutaId);
     Task<PaymentDto?> GetPaymentByAppointmentIdAsync(Guid appointmentId, Guid fisioterapeutaId);
     Task<List<PaymentDto>> GetPendingPaymentsByPacienteIdAsync(Guid pacienteId);
+    Task<List<PaymentDto>> GetAllPaymentsByPacienteIdAsync(Guid pacienteId);
     Task<Payment?> GetPaymentByIdForPatientAsync(Guid paymentId, Guid pacienteId);
     Task UpdatePaymentAsync(Payment payment);
 }

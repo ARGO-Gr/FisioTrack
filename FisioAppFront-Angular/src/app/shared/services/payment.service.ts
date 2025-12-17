@@ -72,6 +72,10 @@ export class PaymentService {
     return this.http.get<Payment[]>(`${this.apiUrl}/pending`);
   }
 
+  getAllPaymentsByPatient(): Observable<Payment[]> {
+    return this.http.get<Payment[]>(`${this.apiUrl}/patient/all`);
+  }
+
   confirmPayment(paymentId: string, confirmDto: ConfirmPaymentDto): Observable<Payment> {
     return this.http.post<Payment>(`${this.apiUrl}/${paymentId}/confirm`, confirmDto);
   }

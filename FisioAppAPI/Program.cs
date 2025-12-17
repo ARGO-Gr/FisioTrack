@@ -99,6 +99,8 @@ builder.Services.AddScoped<FisioAppAPI.Interfaces.IProgramaService, FisioAppAPI.
 builder.Services.AddScoped<FisioAppAPI.Interfaces.IPaymentRepository, FisioAppAPI.Repositories.PaymentRepository>();
 builder.Services.AddScoped<FisioAppAPI.Interfaces.IPaymentService, FisioAppAPI.Services.PaymentService>();
 builder.Services.AddScoped<FisioAppAPI.Interfaces.IPaymentCardService, FisioAppAPI.Services.PaymentCardService>();
+builder.Services.AddScoped<FisioAppAPI.Repositories.FollowupNoteRepository>();
+builder.Services.AddScoped<FisioAppAPI.Interfaces.IFollowupNoteService, FisioAppAPI.Services.FollowupNoteService>();
 
 var app = builder.Build();
 

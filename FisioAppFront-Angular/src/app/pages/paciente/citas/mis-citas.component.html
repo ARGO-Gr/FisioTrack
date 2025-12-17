@@ -10,21 +10,39 @@
     </div>
 
     <!-- Filter Tabs -->
-    <div class="flex gap-4 mb-6 border-b border-border">
+    <div class="flex gap-4 mb-6 border-b border-border overflow-x-auto">
       <button
         (click)="cambiarFiltro('proximas')"
         [class.border-b-2]="filtroActivo === 'proximas'"
         [class.border-primary]="filtroActivo === 'proximas'"
-        class="pb-2 px-4 font-semibold transition-all"
+        class="pb-2 px-4 font-semibold transition-all whitespace-nowrap"
         [ngClass]="filtroActivo === 'proximas' ? 'text-primary' : 'text-muted-foreground'"
       >
         Próximas Citas
       </button>
       <button
+        (click)="cambiarFiltro('pasadas')"
+        [class.border-b-2]="filtroActivo === 'pasadas'"
+        [class.border-primary]="filtroActivo === 'pasadas'"
+        class="pb-2 px-4 font-semibold transition-all whitespace-nowrap"
+        [ngClass]="filtroActivo === 'pasadas' ? 'text-primary' : 'text-muted-foreground'"
+      >
+        Citas Pasadas
+      </button>
+      <button
+        (click)="cambiarFiltro('pagadas')"
+        [class.border-b-2]="filtroActivo === 'pagadas'"
+        [class.border-primary]="filtroActivo === 'pagadas'"
+        class="pb-2 px-4 font-semibold transition-all whitespace-nowrap"
+        [ngClass]="filtroActivo === 'pagadas' ? 'text-primary' : 'text-muted-foreground'"
+      >
+        Citas Pagadas
+      </button>
+      <button
         (click)="cambiarFiltro('canceladas')"
         [class.border-b-2]="filtroActivo === 'canceladas'"
         [class.border-primary]="filtroActivo === 'canceladas'"
-        class="pb-2 px-4 font-semibold transition-all"
+        class="pb-2 px-4 font-semibold transition-all whitespace-nowrap"
         [ngClass]="filtroActivo === 'canceladas' ? 'text-primary' : 'text-muted-foreground'"
       >
         Canceladas
@@ -43,16 +61,16 @@
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
                 <h3 class="text-lg font-semibold text-foreground">{{ cita.descripcion }}</h3>
-                <span [ngClass]="'px-3 py-1 rounded-full text-sm font-medium ' + getEstadoBadgeClass(cita)">
+                <span *ngIf="filtroActivo !== 'pagadas'" [ngClass]="'px-3 py-1 rounded-full text-sm font-medium ' + getEstadoBadgeClass(cita)">
                   {{ getEstadoText(cita) }}
                 </span>
               </div>
-              <p class="text-sm text-muted-foreground">Cita con tu fisioterapeuta</p>
+              <p *ngIf="filtroActivo !== 'pagadas'" class="text-sm text-muted-foreground">Cita con tu fisioterapeuta</p>
             </div>
             <!-- Botones de Acción -->
             <div class="flex items-center gap-2 ml-4">
               <button
-                *ngIf="puedeConfirmar(cita)"
+                *ngIf="puedeConfirmar(cita) && filtroActivo !== 'pasadas' && !esCitaCanceladaPasada(cita)"
                 (click)="openConfirmModal(cita)"
                 class="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium"
               >
@@ -60,7 +78,7 @@
                 Confirmar
               </button>
               <button
-                *ngIf="puedeCancelar(cita)"
+                *ngIf="puedeCancelar(cita) && filtroActivo !== 'pasadas' && !esCitaCanceladaPasada(cita)"
                 (click)="openCancelConfirm(cita)"
                 class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 transition-colors font-medium"
               >
@@ -73,7 +91,7 @@
 
         <div class="space-y-4">
           <!-- Información de la cita -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div [ngClass]="filtroActivo === 'pagadas' ? 'grid-cols-1 md:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'" class="grid gap-4">
             <!-- Fecha -->
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -104,6 +122,17 @@
               <div>
                 <p class="text-sm font-medium text-foreground">Tipo</p>
                 <p class="text-sm text-muted-foreground">{{ cita.tipo }}</p>
+              </div>
+            </div>
+
+            <!-- Precio (solo en citas pagadas) -->
+            <div *ngIf="filtroActivo === 'pagadas'" class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                <mat-icon class="text-green-600">attach_money</mat-icon>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-foreground">Precio</p>
+                <p class="text-sm font-semibold text-green-600">{{ formatearMonto(cita.monto) }}</p>
               </div>
             </div>
           </div>
@@ -152,7 +181,7 @@
             event_busy
           </mat-icon>
           <p class="text-muted-foreground mb-4">
-            {{ filtroActivo === 'proximas' ? 'No tienes citas próximas programadas' : 'No tienes citas canceladas' }}
+            {{ filtroActivo === 'proximas' ? 'No tienes citas próximas programadas' : filtroActivo === 'pasadas' ? 'No tienes citas pasadas' : filtroActivo === 'pagadas' ? 'No tienes citas pagadas' : 'No tienes citas canceladas' }}
           </p>
         </div>
       </app-card>

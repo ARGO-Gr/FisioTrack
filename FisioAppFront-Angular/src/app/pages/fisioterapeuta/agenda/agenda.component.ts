@@ -131,7 +131,7 @@ interface HorarioSlot {
                         <mat-icon class="text-foreground text-lg">person</mat-icon>
                         <div class="flex-1">
                           <h4 class="font-semibold text-foreground">{{ slot.cita.nombrePaciente }}</h4>
-                          <p class="text-xs text-muted-foreground">{{ slot.cita.descripcion || 'Sin descripción' }}</p>
+                          <p class="text-xs text-muted-foreground">{{ slot.cita.tipo || 'Sin tipo' }}</p>
                         </div>
                       </div>
                       <div class="flex items-center gap-2 ml-6 mb-2">

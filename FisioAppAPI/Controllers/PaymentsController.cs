@@ -152,6 +152,29 @@ public class PaymentsController : ControllerBase
     }
 
     /// <summary>
+    /// Obtener todos los pagos del paciente (pendientes y completados)
+    /// </summary>
+    [HttpGet("patient/all")]
+    public async Task<IActionResult> GetAllPaymentsByPatient()
+    {
+        try
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var pacienteId))
+            {
+                return Unauthorized(new { message = "Usuario no autenticado" });
+            }
+
+            var payments = await _paymentService.GetAllPaymentsByPacienteIdAsync(pacienteId);
+            return Ok(payments);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al obtener los pagos", error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Confirmar un pago pendiente (paciente ingresa datos de tarjeta)
     /// </summary>
     [HttpPost("{id}/confirm")]

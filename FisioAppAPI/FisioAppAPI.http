@@ -70,3 +70,48 @@ DELETE {{FisioAppAPI_HostAddress}}/api/appointments/770e8400-e29b-41d4-a716-4466
 Accept: application/json
 
 ###
+# ==================== FOLLOWUP NOTES ENDPOINTS ====================
+
+# 1. Crear una nota de seguimiento
+POST {{FisioAppAPI_HostAddress}}/api/followupnotes
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN
+
+{
+  "appointmentId": "770e8400-e29b-41d4-a716-446655440000",
+  "contenido": "Paciente mostró buen progreso. Se recomienda continuar con los ejercicios en casa."
+}
+
+###
+
+# 2. Obtener nota de seguimiento por cita
+GET {{FisioAppAPI_HostAddress}}/api/followupnotes/770e8400-e29b-41d4-a716-446655440000
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN
+
+###
+
+# 3. Actualizar una nota de seguimiento
+PUT {{FisioAppAPI_HostAddress}}/api/followupnotes/880e8400-e29b-41d4-a716-446655440000
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN
+
+{
+  "contenido": "Paciente mejoró significativamente. Aumentar intensidad de ejercicios."
+}
+
+###
+
+# 4. Eliminar una nota de seguimiento
+DELETE {{FisioAppAPI_HostAddress}}/api/followupnotes/880e8400-e29b-41d4-a716-446655440000
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN
+
+###
+
+# 5. Obtener todas las notas de seguimiento de un paciente
+GET {{FisioAppAPI_HostAddress}}/api/followupnotes/patient/660e8400-e29b-41d4-a716-446655440000
+Accept: application/json
+Authorization: Bearer YOUR_JWT_TOKEN
+
+###

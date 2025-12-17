@@ -151,11 +151,11 @@ import { takeUntil } from 'rxjs/operators';
                       </div>
                       <div>
                         <span class="text-muted-foreground">Fecha Cobro:</span>
-                        <p class="font-medium">{{ payment.fechaPago | date: 'dd/MM/yyyy HH:mm' }}</p>
+                        <p class=\"font-medium\">{{ formatearFechaLocal(payment.fechaPago) | date: 'dd/MM/yyyy HH:mm' }}</p>
                       </div>
                       <div *ngIf="!payment.isPendingPayment">
                         <span class="text-muted-foreground">Fecha Pago:</span>
-                        <p class="font-medium text-green-600">{{ payment.fechaPago | date: 'dd/MM/yyyy HH:mm' }}</p>
+                        <p class=\"font-medium text-green-600\">{{ formatearFechaLocal(payment.fechaPago) | date: 'dd/MM/yyyy HH:mm' }}</p>
                       </div>
                       <div *ngIf="payment.isPendingPayment">
                         <span class="text-muted-foreground">Estado:</span>
@@ -253,6 +253,19 @@ export class HistorialCobrosComponent implements OnInit, OnDestroy {
     this.tarjetaCount = this.payments.filter(p => p.metodoPago === 'Tarjeta').length;
     this.pagadosCount = this.payments.filter(p => !p.isPendingPayment).length;
     this.pendientesCount = this.payments.filter(p => p.isPendingPayment).length;
+  }
+
+  formatearFechaLocal(fecha: Date | string): Date {
+    // Convertir la fecha del backend a fecha local del usuario
+    if (typeof fecha === 'string') {
+      const fechaUTC = new Date(fecha);
+      // Obtener el offset de la zona horaria local en milisegundos
+      const offsetLocal = new Date().getTimezoneOffset() * 60 * 1000;
+      // Restar el offset para convertir de UTC a hora local
+      return new Date(fechaUTC.getTime() - offsetLocal);
+    }
+    const offsetLocal = new Date().getTimezoneOffset() * 60 * 1000;
+    return new Date(fecha.getTime() - offsetLocal);
   }
 
   onChangeInfo(): void {

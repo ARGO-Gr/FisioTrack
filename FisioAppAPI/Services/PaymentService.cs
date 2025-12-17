@@ -84,6 +84,11 @@ public class PaymentService : IPaymentService
         return await _paymentRepository.GetPendingPaymentsByPacienteIdAsync(pacienteId);
     }
 
+    public async Task<List<PaymentDto>> GetAllPaymentsByPacienteIdAsync(Guid pacienteId)
+    {
+        return await _paymentRepository.GetAllPaymentsByPacienteIdAsync(pacienteId);
+    }
+
     public async Task<PaymentDto?> ConfirmPaymentAsync(Guid paymentId, Guid pacienteId, string numeroTarjeta, string titularTarjeta, string numeroAutorizacion)
     {
         var payment = await _paymentRepository.GetPaymentByIdForPatientAsync(paymentId, pacienteId);

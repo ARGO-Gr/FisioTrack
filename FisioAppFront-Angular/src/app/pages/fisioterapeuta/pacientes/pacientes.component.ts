@@ -15,6 +15,7 @@ import { AssignRoutineModalComponent } from './asignar rutina/assign-routine-mod
 import { ConfirmDeleteModalComponent, ConfirmDeleteData } from '../../../shared/components/confirm-delete-modal.component';
 import { PatientProgressModalComponent } from './patient-progress/patient-progress-modal.component';
 import { PatientAppointmentsModalComponent } from './patient-appointments/patient-appointments-modal.component';
+import { PatientFollowupModalComponent } from './patient-followup/patient-followup-modal.component';
 import { HeaderComponent, NavLink } from '../../../shared/components/header.component';
 import { Subject } from 'rxjs';
 import { takeUntil, catchError } from 'rxjs/operators';
@@ -171,6 +172,14 @@ interface PacienteVinculado extends LinkedPatientDto {
                 <app-card-content class="space-y-6">
                   <!-- Action Buttons -->
                   <div class="space-y-2 border-border">
+                    <button
+                      (click)="navigateToFollowup()"
+                      class="w-full px-4 py-3 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors font-medium flex items-center justify-center gap-2"
+                    >
+                      <mat-icon>note_add</mat-icon>
+                      Seguimiento
+                    </button>
+
                     <button
                       (click)="navigateToProgress()"
                       class="w-full px-4 py-3 rounded-lg border border-border text-foreground bg-background hover:bg-muted transition-colors font-medium flex items-center justify-center gap-2"
@@ -486,6 +495,22 @@ export class PacientesComponent implements OnInit, OnDestroy {
     }
     
     const dialogRef = this.dialog.open(PatientAppointmentsModalComponent, {
+      width: '900px',
+      maxWidth: '95vw',
+      data: {
+        pacienteId: this.selectedPaciente.id,
+        nombrePaciente: this.selectedPaciente.nombre
+      }
+    });
+  }
+
+  navigateToFollowup() {
+    if (!this.selectedPaciente) {
+      this.toastService.error('Selecciona un paciente primero');
+      return;
+    }
+    
+    const dialogRef = this.dialog.open(PatientFollowupModalComponent, {
       width: '900px',
       maxWidth: '95vw',
       data: {
