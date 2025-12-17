@@ -244,8 +244,9 @@ public class AuthController : ControllerBase
                         user.IsConfirmed = true;
                         user.ConfirmationToken = null;
                         await _userService.UpdateUserAsync(user);
-                        createdUsers.Add(new { 
-                            fullName = user.FullName, 
+                        createdUsers.Add(new
+                        {
+                            fullName = user.FullName,
                             email = user.Email,
                             password = userDto.Password
                         });
@@ -258,14 +259,27 @@ public class AuthController : ControllerBase
                 }
             }
 
-            return Ok(new { 
-                message = $"Se crearon {createdUsers.Count} usuarios de prueba", 
-                users = createdUsers 
+            return Ok(new
+            {
+                message = $"Se crearon {createdUsers.Count} usuarios de prueba",
+                users = createdUsers
             });
         }
         catch (Exception ex)
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+    // ENDPOINT DE SALUD / PING
+    [HttpGet("health")]
+    public IActionResult Health()
+    {
+        return Ok(new
+        {
+            status = "OK",
+            service = "FisioAppAPI",
+            controller = "AuthController",
+            timestamp = DateTime.UtcNow
+        });
     }
 }

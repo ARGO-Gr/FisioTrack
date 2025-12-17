@@ -110,7 +110,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// app.UseHttpsRedirection(); // Comentado para desarrollo con HTTP
+app.UseHttpsRedirection(); // Comentado para desarrollo con HTTP
 
 app.UseCors("AllowAngularApp");
 
