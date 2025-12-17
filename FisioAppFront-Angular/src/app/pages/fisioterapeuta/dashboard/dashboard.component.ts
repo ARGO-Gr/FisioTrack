@@ -334,6 +334,12 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(['/']);
   }
 
+  navigateToPaciente(pacienteId: string): void {
+    this.router.navigate(['/fisioterapeuta/pacientes'], { 
+      queryParams: { pacienteId: pacienteId } 
+    });
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();

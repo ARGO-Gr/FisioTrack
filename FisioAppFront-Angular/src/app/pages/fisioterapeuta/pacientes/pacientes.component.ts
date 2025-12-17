@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
@@ -83,71 +83,72 @@ interface PacienteVinculado extends LinkedPatientDto {
           <!-- Patients List -->
           <div class="lg:col-span-2 space-y-4">
             <div *ngIf="!loading && filteredPacientes.length > 0; else noPacientesOrLoading">
-              <app-card
-                *ngFor="let paciente of filteredPacientes"
-                class="cursor-pointer hover:shadow-lg transition-shadow"
-                [class.ring-2]="selectedPaciente?.id === paciente.id"
-                [class.ring-primary]="selectedPaciente?.id === paciente.id"
-                (click)="selectPaciente(paciente)"
-              >
-                <app-card-content class="p-6">
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                      <!-- Initials Avatar -->
-                      <div class="flex items-center gap-3 mb-3">
-                        <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <span class="text-lg font-semibold text-primary">
-                            {{ getInitials(paciente.nombre) }}
-                          </span>
+              <div *ngFor="let paciente of filteredPacientes" class="space-y-4">
+                <app-card
+                  class="cursor-pointer hover:shadow-lg transition-all"
+                  [ngClass]="{
+                    'border-2 border-destructive bg-destructive/5': selectedPaciente?.id === paciente.id
+                  }"
+                  (click)="selectPaciente(paciente)"
+                >
+                  <app-card-content class="p-6">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <!-- Initials Avatar -->
+                        <div class="flex items-center gap-3 mb-3">
+                          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <span class="text-lg font-semibold text-primary">
+                              {{ getInitials(paciente.nombre) }}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 class="text-lg font-semibold text-foreground">{{ paciente.nombre }}</h3>
+                            <p class="text-sm text-muted-foreground">{{ calculateAge(paciente.fechaNacimiento) }} años</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 class="text-lg font-semibold text-foreground">{{ paciente.nombre }}</h3>
-                          <p class="text-sm text-muted-foreground">{{ calculateAge(paciente.fechaNacimiento) }} años</p>
-                        </div>
-                      </div>
 
-                      <!-- Patient Info -->
-                      <div class="grid grid-cols-2 gap-4 mb-3">
-                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                          <mat-icon >phone</mat-icon>
-                          <span>{{ paciente.telefono || 'Sin teléfono' }}</span>
+                        <!-- Patient Info -->
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                          <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                            <mat-icon>phone</mat-icon>
+                            <span>{{ paciente.telefono || 'Sin teléfono' }}</span>
+                          </div>
+                          <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                            <mat-icon>email</mat-icon>
+                            <span class="truncate">{{ paciente.email }}</span>
+                          </div>
+                          <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                            <mat-icon>calendar_today</mat-icon>
+                            <span>Ingreso: {{ formatDate(paciente.fechaIngreso) }}</span>
+                          </div>
                         </div>
-                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                          <mat-icon >email</mat-icon>
-                          <span class="truncate">{{ paciente.email }}</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                          <mat-icon >calendar_today</mat-icon>
-                          <span>Ingreso: {{ formatDate(paciente.fechaIngreso) }}</span>
-                        </div>
-                      </div>
 
-                      <!-- Barra de Progreso -->
-                      <div *ngIf="paciente.tieneProgramaActivo" class="mt-4 space-y-2">
-                        <div class="flex items-center justify-between text-sm">
-                          <span class="text-muted-foreground">Progreso del Programa</span>
-                          <span class="font-medium text-foreground">
-                            {{ paciente.diasCompletados }}/{{ paciente.diasTotales }} días ({{ paciente.porcentajeProgreso }}%)
-                          </span>
+                        <!-- Barra de Progreso -->
+                        <div *ngIf="paciente.tieneProgramaActivo" class="mt-4 space-y-2">
+                          <div class="flex items-center justify-between text-sm">
+                            <span class="text-muted-foreground">Progreso del Programa</span>
+                            <span class="font-medium text-foreground">
+                              {{ paciente.diasCompletados }}/{{ paciente.diasTotales }} días ({{ paciente.porcentajeProgreso }}%)
+                            </span>
+                          </div>
+                          <div class="w-full bg-muted rounded-full h-2 overflow-hidden">
+                            <div
+                              class="bg-primary h-full transition-all duration-300"
+                              [style.width.%]="paciente.porcentajeProgreso"
+                            ></div>
+                          </div>
                         </div>
-                        <div class="w-full bg-muted rounded-full h-2 overflow-hidden">
-                          <div
-                            class="bg-primary h-full transition-all duration-300"
-                            [style.width.%]="paciente.porcentajeProgreso"
-                          ></div>
+                        <div *ngIf="!paciente.tieneProgramaActivo" class="mt-4">
+                          <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                            <mat-icon class="text-base">info</mat-icon>
+                            <span>Sin programa activo</span>
+                          </div>
                         </div>
                       </div>
-                      <div *ngIf="!paciente.tieneProgramaActivo" class="mt-4">
-                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                          <mat-icon class="text-base">info</mat-icon>
-                          <span>Sin programa activo</span>
-                        </div>
-                      </div>
-
                     </div>
-                  </div>
-                </app-card-content>
-              </app-card>
+                  </app-card-content>
+                </app-card>
+              </div>
             </div>
 
             <ng-template #noPacientesOrLoading>
@@ -242,7 +243,8 @@ export class PacientesComponent implements OnInit, OnDestroy {
     private programaService: ProgramaService,
     private router: Router,
     private dialog: MatDialog,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit() {
@@ -266,6 +268,19 @@ export class PacientesComponent implements OnInit, OnDestroy {
         next: (pacientes) => {
           this.pacientes = pacientes;
           this.loading = false;
+          
+          // Verificar si hay un pacienteId en los queryParams
+          this.activatedRoute.queryParams
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(params => {
+              if (params['pacienteId']) {
+                const pacienteId = params['pacienteId'];
+                const pacienteEncontrado = this.pacientes.find(p => p.id === pacienteId);
+                if (pacienteEncontrado) {
+                  this.selectPaciente(pacienteEncontrado);
+                }
+              }
+            });
         },
         error: (error) => {
           console.error('Error loading patients:', error);

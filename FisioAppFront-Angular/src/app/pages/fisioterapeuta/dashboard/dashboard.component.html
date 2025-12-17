@@ -94,7 +94,7 @@
         <div *ngIf="pacientesVinculados.length > 0; else noPacientes" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div *ngFor="let paciente of pacientesVinculados" 
             class="p-4 rounded-lg border-2 border-border hover:border-primary transition-all cursor-pointer"
-            [routerLink]="['/fisioterapeuta/pacientes']">
+            (click)="navigateToPaciente(paciente.id)">
             
             <div class="flex items-start gap-3 mb-3">
               <!-- Avatar con iniciales -->
