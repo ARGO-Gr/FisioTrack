@@ -110,42 +110,89 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
     const hoy = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
     console.log('📅 Fecha actual (hoy):', hoy);
     
-    this.appointmentService.getAppointmentsByDay(fisioterapeutaId, hoy)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (citas: Appointment[]) => {
-          console.log('✅ Citas recibidas del backend:', citas);
-          console.log('📊 Número de citas:', citas.length);
-          
-          // Guardar todas las citas del día
-          this.todasLasCitas = citas;
-          
-          // Obtener la hora actual
-          const ahora = new Date();
-          const horaActual = ahora.getHours().toString().padStart(2, '0') + ':' + 
-                            ahora.getMinutes().toString().padStart(2, '0');
-          
-          console.log('⏰ Hora actual:', horaActual);
-          
-          // Filtrar citas desde la hora actual en adelante
-          const citasValidas = citas.filter(c => c.hora >= horaActual);
-          console.log('✔️ Citas válidas (desde hora actual):', citasValidas.length, citasValidas);
-          
-          // Filtrar solo citas amarillas (pendientes), azules (ambas confirmadas) y naranjas (cobro pendiente)
-          this.proximasCitas = citasValidas
-            .filter(c => {
-              const citaColor = this.getCitaColor(c);
-              return citaColor.includes('yellow') || citaColor.includes('blue') || citaColor.includes('orange');
-            })
-            .slice(0, 5);
-          
-          console.log('🎯 Próximas citas filtradas:', this.proximasCitas.length, this.proximasCitas);
-        },
-        error: (error) => {
-          console.error('❌ Error loading próximas citas:', error);
-          console.error('Error details:', JSON.stringify(error, null, 2));
-        }
-      });
+    // Generar fechas para los próximos 7 días
+    const fechas: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      const fecha = new Date(ahora);
+      fecha.setDate(fecha.getDate() + i);
+      const fechaStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+      fechas.push(fechaStr);
+    }
+    
+    console.log('📅 Fechas a cargar:', fechas);
+    
+    // Cargar citas para cada día
+    const todasLasCitasDelRango: Appointment[] = [];
+    let citasCargadas = 0;
+    
+    fechas.forEach((fecha, index) => {
+      this.appointmentService.getAppointmentsByDay(fisioterapeutaId, fecha)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (citas: Appointment[]) => {
+            console.log(`✅ Citas recibidas para ${fecha}:`, citas.length);
+            todasLasCitasDelRango.push(...citas);
+            citasCargadas++;
+            
+            // Cuando hayamos cargado todas las fechas, procesamos
+            if (citasCargadas === fechas.length) {
+              this.procesarProximasCitas(todasLasCitasDelRango, hoy);
+            }
+          },
+          error: (error) => {
+            console.error(`❌ Error loading citas para ${fecha}:`, error);
+            citasCargadas++;
+            
+            // Continuamos aunque falle una fecha
+            if (citasCargadas === fechas.length) {
+              this.procesarProximasCitas(todasLasCitasDelRango, hoy);
+            }
+          }
+        });
+    });
+  }
+
+  procesarProximasCitas(citas: Appointment[], hoy: string): void {
+    console.log('📊 Total citas del rango de 7 días:', citas.length);
+    
+    // Guardar todas las citas
+    this.todasLasCitas = citas;
+    
+    // Obtener la hora actual
+    const ahora = new Date();
+    const horaActual = ahora.getHours().toString().padStart(2, '0') + ':' + 
+                      ahora.getMinutes().toString().padStart(2, '0');
+    
+    console.log('⏰ Hora actual:', horaActual);
+    console.log('🕐 Comparando citas con datetime:', hoy + ' ' + horaActual);
+    
+    // Filtrar citas desde la fecha-hora actual en adelante
+    const citasValidas = citas.filter(c => {
+      const citaDatetime = `${c.fecha}T${c.hora}`;
+      const ahoraDatetime = `${hoy}T${horaActual}`;
+      const citaTime = new Date(citaDatetime).getTime();
+      const ahoraTime = new Date(ahoraDatetime).getTime();
+      return citaTime >= ahoraTime;
+    });
+    console.log('✔️ Citas válidas (desde datetime actual):', citasValidas.length);
+    
+    // Ordenar por fecha y hora
+    const citasOrdenadas = citasValidas.sort((a, b) => {
+      const fechaA = new Date(`${a.fecha}T${a.hora}`);
+      const fechaB = new Date(`${b.fecha}T${b.hora}`);
+      return fechaA.getTime() - fechaB.getTime();
+    });
+
+    // Filtrar solo citas amarillas (pendientes), azules (ambas confirmadas) y naranjas (cobro pendiente)
+    // y tomar solo las primeras 5
+    this.proximasCitas = citasOrdenadas
+      .filter(c => {
+        const citaColor = this.getCitaColor(c);
+        return citaColor.includes('yellow') || citaColor.includes('blue') || citaColor.includes('orange');
+      })
+      .slice(0, 5);
+    
+    console.log('🎯 Próximas 5 citas filtradas:', this.proximasCitas.length, this.proximasCitas);
   }
 
   getCountPendingAppointments(): number {
@@ -255,6 +302,26 @@ export class FisioterapeutaDashboardComponent implements OnInit, OnDestroy {
       age--;
     }
     return age;
+  }
+
+  isHoyCita(fecha: string): boolean {
+    const ahora = new Date();
+    const hoy = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+    return fecha === hoy;
+  }
+
+  formatFecha(fecha: string): string {
+    const [año, mes, día] = fecha.split('-');
+    const date = new Date(parseInt(año), parseInt(mes) - 1, parseInt(día));
+    
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    
+    const diaSemana = diasSemana[date.getDay()];
+    const diaNum = parseInt(día);
+    const mesTxt = meses[date.getMonth()];
+    
+    return `${diaSemana} ${diaNum} de ${mesTxt}`;
   }
 
   onChangeInfo(): void {

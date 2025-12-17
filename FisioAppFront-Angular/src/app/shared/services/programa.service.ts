@@ -69,8 +69,8 @@ export interface DiaDetalleDto {
   nombreRutina?: string;
   completado: boolean;
   fechaCompletado: string | null;
-  // Nuevo: Campos para incumplimiento y bloqueo
-  incumplimiento: boolean;
+  // Campos para incumplimiento y bloqueo
+  incumplido: boolean;
   fechaIncumplimiento?: string | null;
   bloqueado: boolean;
   motivoBloqueo?: string;
@@ -118,6 +118,13 @@ export interface ProgresoGeneralDto {
   diasIncumplidos: number;
   porcentajeCompletado: number;
   porcentajeIncumplimiento: number;
+}
+
+export interface IncumplimientoDto {
+  diaRutinaId: number;
+  nombreDia: string;
+  semanaNumero: number;
+  fechaIncumplimiento: string;
 }
 
 @Injectable({
@@ -261,6 +268,14 @@ export class ProgramaService {
     return this.http.post(
       `${this.apiUrl}/${programaId}/finalizar`,
       {},
+      { headers: this.getHeaders() }
+    );
+  }
+
+  // Obtener incumplimientos de un paciente (fisioterapeuta)
+  obtenerIncumplimientosPaciente(pacienteId: string, programaId: number): Observable<IncumplimientoDto[]> {
+    return this.http.get<IncumplimientoDto[]>(
+      `${this.apiUrl}/paciente/${pacienteId}/incumplimientos/${programaId}`,
       { headers: this.getHeaders() }
     );
   }

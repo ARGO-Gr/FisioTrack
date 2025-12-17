@@ -444,4 +444,42 @@ public class UserService : IUserService
     {
         await _repo.UpdateAsync(user);
     }
+
+    public async Task<UserProfileDto> GetUserProfileAsync(Guid userId)
+    {
+        var user = await _repo.FindByIdAsync(userId);
+        if (user is null)
+            throw new InvalidOperationException("User not found");
+
+        return new UserProfileDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FullName = user.FullName,
+            Telefono = user.Telefono,
+            FechaNacimiento = user.FechaNacimiento
+        };
+    }
+
+    public async Task<UserProfileDto> UpdateUserProfileAsync(Guid userId, UpdateUserProfileDto dto)
+    {
+        var user = await _repo.FindByIdAsync(userId);
+        if (user is null)
+            throw new InvalidOperationException("User not found");
+
+        user.FullName = dto.FullName ?? user.FullName;
+        user.Telefono = dto.Telefono ?? user.Telefono;
+        user.FechaNacimiento = dto.FechaNacimiento ?? user.FechaNacimiento;
+
+        await _repo.UpdateAsync(user);
+
+        return new UserProfileDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FullName = user.FullName,
+            Telefono = user.Telefono,
+            FechaNacimiento = user.FechaNacimiento
+        };
+    }
 }

@@ -59,6 +59,7 @@ export class RutinasComponent implements OnInit {
     semanaActual: 1,
     fechaInicio: "",
     fechaFin: "",
+    fechaInicioDate: new Date(), // Agregar para cálculos
     fisioterapeuta: "",
     diasCompletados: 0,
     diasTotales: 0,
@@ -104,6 +105,7 @@ export class RutinasComponent implements OnInit {
       semanaActual: programa.semanaActual,
       fechaInicio: this.formatearFecha(programa.fechaInicio),
       fechaFin: this.formatearFecha(programa.fechaFin),
+      fechaInicioDate: new Date(programa.fechaInicio),
       fisioterapeuta: programa.fisioterapeutaNombre,
       diasCompletados: programa.diasCompletados,
       diasTotales: programa.diasTotales,
@@ -119,8 +121,8 @@ export class RutinasComponent implements OnInit {
         nombre: dia.tipo === 'rutina' && dia.ejercicios.length > 0 ? dia.ejercicios[0]?.nombre || 'Rutina' : undefined,
         completado: dia.completado,
         ejercicios: dia.cantidadEjercicios,
-        // Nuevo: mapear incumplimiento y bloqueo
-        incumplimiento: dia.incumplimiento || false,
+        // Mapear incumplimiento y bloqueo
+        incumplimiento: dia.incumplido || false,
         fechaIncumplimiento: dia.fechaIncumplimiento,
         bloqueado: dia.bloqueado || false,
         motivoBloqueo: dia.motivoBloqueo
@@ -158,24 +160,58 @@ export class RutinasComponent implements OnInit {
     this.cambiarSemana(this.semanaSeleccionada + 1);
   }
 
-  getDiaColor(dia: DiaPrograma): string {
-    // Nuevo: Días con incumplimiento mostrar en rojo
+  getDiaColor(dia: DiaPrograma, index: number): string {
+    // Días con incumplimiento mostrar en rojo
     if (dia.incumplimiento) return 'bg-red-500 text-white';
-    // Nuevo: Días bloqueados en gris
-    if (dia.bloqueado) return 'bg-gray-400 text-white cursor-not-allowed';
-    if (dia.completado) return 'bg-green-500 text-white';
+    
+    // Días de descanso siempre en azul
     if (dia.tipo === 'descanso') return 'bg-blue-500 text-white';
+    
+    // Días completados
+    if (dia.completado) return 'bg-green-500 text-white';
+    
+    // Verificar si es un día futuro (solo para días de rutina)
+    if (this.esDiaFuturo(index)) {
+      return 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60';
+    }
+    
+    // Días bloqueados en gris
+    if (dia.bloqueado) return 'bg-gray-400 text-white cursor-not-allowed';
+    
     return 'bg-primary text-primary-foreground';
   }
 
-  getDiaIcono(dia: DiaPrograma): string {
-    // Nuevo: Días incumplidos mostrar X
-    if (dia.incumplimiento) return 'cancel';
-    // Nuevo: Días bloqueados mostrar candado
-    if (dia.bloqueado) return 'lock';
+  getDiaIcono(dia: DiaPrograma, index: number): string {
+    // Días de descanso siempre muestran taza de café
     if (dia.tipo === 'descanso') return 'local_cafe';
+    
+    // Días incumplidos mostrar X
+    if (dia.incumplimiento) return 'cancel';
+    
+    // Días completados
     if (dia.completado) return 'check_circle';
+    
+    // Verificar si es un día futuro (solo para días de rutina)
+    if (this.esDiaFuturo(index)) {
+      return 'schedule';
+    }
+    
+    // Días bloqueados mostrar candado
+    if (dia.bloqueado) return 'lock';
+    
     return 'fitness_center';
+  }
+
+  esDiaFuturo(index: number): boolean {
+    const diasDesdeInicio = ((this.semanaSeleccionada - 1) * 7) + index;
+    const fechaDia = new Date(this.programa.fechaInicioDate);
+    fechaDia.setDate(fechaDia.getDate() + diasDesdeInicio);
+    
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaDia.setHours(0, 0, 0, 0);
+    
+    return fechaDia > hoy;
   }
 
   getTiempoEstimado(ejercicios: number): number {
@@ -183,9 +219,10 @@ export class RutinasComponent implements OnInit {
   }
 
   esdiaPosterior(index: number): boolean {
-    // Si la semana seleccionada no es la semana actual del programa, bloquear días no completados
+    // Si la semana seleccionada no es la semana actual del programa, permitir solo visualización
     if (this.semanaSeleccionada !== this.programa.semanaActual) {
-      return true;
+      const dia = this.semanaActual.dias[index];
+      return !dia.completado;
     }
     
     const dia = this.semanaActual.dias[index];
@@ -200,42 +237,56 @@ export class RutinasComponent implements OnInit {
       return false;
     }
 
-    // Nuevo: Si está marcado como incumplido, bloquear los siguientes días
-    if (dia.incumplimiento) {
-      return true; // El día incumplido está bloqueado
-    }
-
-    // Verificar si hay días anteriores incumplidos (requisito no cumplido)
-    const hayDiasAnterioresIncumplidos = this.semanaActual.dias
-      .slice(0, index)
-      .some(d => d.incumplimiento && d.tipo === 'rutina');
-
-    if (hayDiasAnterioresIncumplidos) {
-      return true; // Bloquear si hay días anteriores incumplidos
-    }
+    // Calcular la fecha que corresponde a este día
+    const diasDesdeInicio = ((this.semanaSeleccionada - 1) * 7) + index;
+    const fechaDia = new Date(this.programa.fechaInicioDate);
+    fechaDia.setDate(fechaDia.getDate() + diasDesdeInicio);
     
-    // Obtener el día actual de la semana (0 = Domingo, 1 = Lunes, ..., 6 = Sábado)
     const hoy = new Date();
-    const diaActualSemana = hoy.getDay(); // 0-6
+    hoy.setHours(0, 0, 0, 0);
+    fechaDia.setHours(0, 0, 0, 0);
     
-    // Mapear el índice del array (0-6) al día de la semana considerando que:
-    // El array empieza en Lunes (index 0 = Lunes, 1 = Martes, ..., 6 = Domingo)
-    // getDay() devuelve: 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+    // Validar que no sea un día futuro (mañana o después)
+    if (fechaDia > hoy) {
+      return true; // Bloquear días futuros
+    }
+
+    // Si está marcado como incumplido, permitir que lo complete (ya pasó su fecha)
+    if (dia.incumplimiento) {
+      return false;
+    }
+
+    // Verificar todos los días de rutina anteriores en todas las semanas
+    let hayDiasPendientes = false;
     
-    // Convertir diaActualSemana a índice del array (Lunes = 0)
-    let diaActualIndex = diaActualSemana === 0 ? 6 : diaActualSemana - 1;
+    // Revisar semanas anteriores
+    for (let s = 0; s < this.semanaSeleccionada - 1; s++) {
+      const semanaAnterior = this.semanas[s];
+      if (semanaAnterior) {
+        const diasRutinaNoCompletados = semanaAnterior.dias.filter(
+          d => d.tipo === 'rutina' && !d.completado
+        );
+        if (diasRutinaNoCompletados.length > 0) {
+          hayDiasPendientes = true;
+          break;
+        }
+      }
+    }
     
-    // Si el día en el array es posterior al día actual de la semana, bloquearlo
-    if (index > diaActualIndex) {
+    // Si hay días pendientes en semanas anteriores, bloquear
+    if (hayDiasPendientes) {
       return true;
     }
     
-    // Si es el día actual o anterior, permitir solo si no hay días anteriores pendientes
-    const hayDiasAnterioresPendientes = this.semanaActual.dias
-      .slice(0, index)
-      .some(d => !d.completado && d.tipo === 'rutina');
+    // Verificar días anteriores en la semana actual
+    for (let i = 0; i < index; i++) {
+      const diaAnterior = this.semanaActual.dias[i];
+      if (diaAnterior.tipo === 'rutina' && !diaAnterior.completado) {
+        return true; // Hay un día anterior sin completar
+      }
+    }
     
-    return hayDiasAnterioresPendientes;
+    return false; // No hay días pendientes y no es futuro, permitir acceso
   }
 
   onChangeInfo(): void {

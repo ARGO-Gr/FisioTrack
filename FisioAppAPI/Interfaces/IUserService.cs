@@ -14,4 +14,14 @@ public interface IUserService
     Task SendPasswordAsync(SendPasswordDto dto);
     Task<User?> GetUserByEmailAsync(string email);
     Task UpdateUserAsync(User user);
+    Task<UserProfileDto> GetUserProfileAsync(Guid userId);
+    Task<UserProfileDto> UpdateUserProfileAsync(Guid userId, UpdateUserProfileDto dto);
+}
+
+public interface IPaymentCardService
+{
+    Task<List<PaymentCardDto>> GetUserPaymentCardsAsync(Guid pacienteId);
+    Task<PaymentCardDto> AddPaymentCardAsync(Guid pacienteId, CreatePaymentCardDto dto);
+    Task<PaymentCardDto> SetDefaultPaymentCardAsync(Guid pacienteId, Guid cardId);
+    Task DeletePaymentCardAsync(Guid cardId);
 }

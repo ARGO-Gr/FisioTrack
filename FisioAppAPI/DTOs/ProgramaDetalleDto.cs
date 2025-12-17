@@ -40,6 +40,10 @@ namespace FisioAppAPI.DTOs
         public string? NombreRutina { get; set; }
         public bool Completado { get; set; }
         public DateTime? FechaCompletado { get; set; }
+        public bool Incumplido { get; set; }
+        public DateTime? FechaIncumplimiento { get; set; }
+        public bool Bloqueado { get; set; }
+        public string? MotivoBloqueo { get; set; }
         public int CantidadEjercicios { get; set; }
         public List<EjercicioDetalleDto> Ejercicios { get; set; } = new List<EjercicioDetalleDto>();
     }

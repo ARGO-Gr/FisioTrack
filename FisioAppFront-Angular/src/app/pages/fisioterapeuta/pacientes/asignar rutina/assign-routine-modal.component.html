@@ -86,11 +86,29 @@
               <mat-icon class="text-primary">calendar_today</mat-icon>
               Duración del Programa (semanas) *
             </label>
-            <input
-              type="number"
-              formControlName="semanas"
-              class="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-            />
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="decrementarSemanas()"
+                [disabled]="(routineForm.get('semanas')?.value || 1) <= 1"
+                class="px-4 py-3 rounded-lg border border-input bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold text-lg flex items-center justify-center w-12 h-12 flex-shrink-0"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                formControlName="semanas"
+                class="flex-1 px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-center font-semibold"
+                readonly
+              />
+              <button
+                type="button"
+                (click)="incrementarSemanas()"
+                class="px-4 py-3 rounded-lg border border-input bg-background hover:bg-muted transition-colors font-semibold text-lg flex items-center justify-center w-12 h-12 flex-shrink-0"
+              >
+                +
+              </button>
+            </div>
             <p class="text-sm text-muted-foreground">
               Este patrón semanal se repetirá durante {{ routineForm.get('semanas')?.value }} {{ routineForm.get('semanas')?.value === 1 ? 'semana' : 'semanas' }}
             </p>

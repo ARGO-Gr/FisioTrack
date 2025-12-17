@@ -130,6 +130,20 @@ export class AssignRoutineModalComponent implements OnInit, OnDestroy {
     }
   }
 
+  incrementarSemanas() {
+    const semanasControl = this.routineForm.get('semanas');
+    const valActual = semanasControl?.value || 1;
+    semanasControl?.setValue(valActual + 1);
+  }
+
+  decrementarSemanas() {
+    const semanasControl = this.routineForm.get('semanas');
+    const valActual = semanasControl?.value || 1;
+    if (valActual > 1) {
+      semanasControl?.setValue(valActual - 1);
+    }
+  }
+
   cargarProgramaActivo() {
     if (!this.programaActivo) return;
 

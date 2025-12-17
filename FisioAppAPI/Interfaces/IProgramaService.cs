@@ -16,5 +16,7 @@ namespace FisioAppAPI.Interfaces
         Task<bool> MarcarEjercicioCompletadoAsync(Guid pacienteId, MarcarEjercicioCompletadoDto dto);
         Task<ProgresoGeneralDto?> GetProgresoGeneralAsync(int programaId);
         Task<bool> EliminarProgramaAsync(int programaId, Guid fisioterapeutaId);
+        Task<List<IncumplimientoDto>> GetIncumplimientosPorPacienteAsync(Guid pacienteId, int programaId);
+        Task VerificarYMarcarIncumplimientosAsync();
     }
 }

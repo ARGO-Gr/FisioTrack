@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Appointment> Appointments { get; set; } = null!;
     public DbSet<PatientLink> PatientLinks { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
+    public DbSet<PaymentCard> PaymentCards { get; set; } = null!;
     public DbSet<ProgramaRehabilitacion> ProgramasRehabilitacion { get; set; } = null!;
     public DbSet<SemanaRutina> SemanasRutina { get; set; } = null!;
     public DbSet<DiaRutina> DiasRutina { get; set; } = null!;
@@ -227,5 +228,31 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(p => p.PacienteId);
             entity.HasIndex(p => new { p.EjercicioId, p.PacienteId });
         });
+
+        modelBuilder.Entity<PaymentCard>(entity =>
+        {
+            entity.ToTable("PaymentCard");
+            entity.HasKey(pc => pc.Id);
+            entity.Property(pc => pc.PacienteId).IsRequired();
+            entity.Property(pc => pc.CardNumberEncrypted)
+                  .IsRequired()
+                  .HasMaxLength(500); // Encrypted card number
+            entity.Property(pc => pc.Last4)
+                  .IsRequired()
+                  .HasMaxLength(4);
+            entity.Property(pc => pc.CardHolderName)
+                  .IsRequired()
+                  .HasMaxLength(255);
+            entity.Property(pc => pc.ExpiryMonth).IsRequired();
+            entity.Property(pc => pc.ExpiryYear).IsRequired();
+            entity.Property(pc => pc.CardType).IsRequired();
+            entity.Property(pc => pc.IsDefault).IsRequired().HasDefaultValue(false);
+            entity.Property(pc => pc.IsActive).IsRequired().HasDefaultValue(true);
+            entity.Property(pc => pc.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+
+            entity.HasIndex(pc => pc.PacienteId);
+            entity.HasIndex(pc => new { pc.PacienteId, pc.IsDefault });
+        });
     }
+
 }

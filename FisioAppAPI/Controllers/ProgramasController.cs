@@ -309,5 +309,27 @@ namespace FisioAppAPI.Controllers
                 return StatusCode(500, new { message = "Error al eliminar el programa", error = ex.Message });
             }
         }
+
+        // GET: api/programas/paciente/{pacienteId}/incumplimientos/{programaId}
+        // Fisioterapeuta obtiene los incumplimientos del paciente en un programa
+        [HttpGet("paciente/{pacienteId}/incumplimientos/{programaId}")]
+        [Authorize(Roles = "physiotherapist")]
+        public async Task<IActionResult> GetIncumplimientosPaciente(string pacienteId, int programaId)
+        {
+            try
+            {
+                if (!Guid.TryParse(pacienteId, out var pacienteGuid))
+                    return BadRequest(new { message = "ID de paciente inválido" });
+
+                var incumplimientos = await _programaService.GetIncumplimientosPorPacienteAsync(pacienteGuid, programaId);
+
+                return Ok(incumplimientos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al obtener incumplimientos", error = ex.Message });
+            }
+        }
     }
 }
+

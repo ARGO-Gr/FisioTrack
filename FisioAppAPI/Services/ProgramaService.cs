@@ -227,13 +227,84 @@ namespace FisioAppAPI.Services
             var dia = await _context.DiasRutina
                 .Include(d => d.Semana)
                     .ThenInclude(s => s.Programa)
+                        .ThenInclude(p => p.Semanas)
+                            .ThenInclude(sem => sem.Dias)
                 .FirstOrDefaultAsync(d => d.Id == dto.DiaRutinaId);
 
             if (dia == null || dia.Semana?.Programa?.PacienteId != pacienteId)
                 return false;
 
+            // Validar que no hay días anteriores sin completar
+            if (dto.Completado)
+            {
+                var programa = dia.Semana.Programa;
+                var todasLasSemanas = programa.Semanas.OrderBy(s => s.NumeroSemana).ToList();
+                
+                // Calcular la fecha que le corresponde a este día
+                int diasDesdeInicio = 0;
+                foreach (var semana in todasLasSemanas)
+                {
+                    if (semana.NumeroSemana < dia.Semana.NumeroSemana)
+                    {
+                        diasDesdeInicio += 7; // Agregar una semana completa
+                    }
+                    else if (semana.NumeroSemana == dia.Semana.NumeroSemana)
+                    {
+                        diasDesdeInicio += dia.OrdenDia;
+                        break;
+                    }
+                }
+                
+                var fechaDia = programa.FechaInicio.AddDays(diasDesdeInicio).Date;
+                var fechaHoy = DateTime.UtcNow.Date;
+                
+                // Validar que no está intentando adelantar días futuros
+                if (fechaDia > fechaHoy)
+                {
+                    return false; // No permitir completar días futuros
+                }
+                
+                // Buscar días de rutina anteriores no completados
+                bool hayDiasPendientes = false;
+                foreach (var semana in todasLasSemanas)
+                {
+                    if (semana.NumeroSemana > dia.Semana.NumeroSemana)
+                        break;
+                        
+                    var diasOrdenados = semana.Dias.OrderBy(d => d.OrdenDia).ToList();
+                    
+                    foreach (var diaAnterior in diasOrdenados)
+                    {
+                        // Si llegamos al día actual, detenerse
+                        if (diaAnterior.Id == dia.Id)
+                            break;
+                            
+                        // Si es día de rutina y no está completado
+                        if (diaAnterior.Tipo == TipoDia.Rutina && !diaAnterior.Completado)
+                        {
+                            hayDiasPendientes = true;
+                            break;
+                        }
+                    }
+                    
+                    if (hayDiasPendientes)
+                        break;
+                }
+                
+                if (hayDiasPendientes)
+                {
+                    return false; // No permitir completar si hay días pendientes
+                }
+            }
+
             dia.Completado = dto.Completado;
             dia.FechaCompletado = dto.Completado ? DateTime.UtcNow : null;
+            
+            // Si se marca como no completado después de la fecha, es incumplimiento
+            if (!dto.Completado && dia.Incumplido)
+            {
+                // Ya estaba marcado como incumplido, mantener el estado
+            }
 
             return await _context.SaveChangesAsync() > 0;
         }
@@ -293,7 +364,12 @@ namespace FisioAppAPI.Services
                 .SelectMany(s => s.Dias)
                 .Count(d => d.Tipo == TipoDia.Rutina);
 
+            var diasIncumplidos = programa.Semanas
+                .SelectMany(s => s.Dias)
+                .Count(d => d.Incumplido && d.Tipo == TipoDia.Rutina);
+
             var porcentaje = diasTotales > 0 ? (double)diasCompletados / diasTotales * 100 : 0;
+            var porcentajeIncumplimiento = diasTotales > 0 ? (double)diasIncumplidos / diasTotales * 100 : 0;
 
             return new ProgresoGeneralDto
             {
@@ -306,7 +382,9 @@ namespace FisioAppAPI.Services
                 DiasDescanso = diasDescanso,
                 DiasRestantes = diasTotales - diasCompletados,
                 DiasTotales = diasTotales,
-                PorcentajeCompletado = Math.Round(porcentaje, 2)
+                DiasIncumplidos = diasIncumplidos,
+                PorcentajeCompletado = Math.Round(porcentaje, 2),
+                PorcentajeIncumplimiento = Math.Round(porcentajeIncumplimiento, 2)
             };
         }
 
@@ -318,6 +396,63 @@ namespace FisioAppAPI.Services
                 return false;
 
             return await _programaRepository.DeleteAsync(programaId);
+        }
+
+        public async Task<List<IncumplimientoDto>> GetIncumplimientosPorPacienteAsync(Guid pacienteId, int programaId)
+        {
+            var programa = await _context.ProgramasRehabilitacion
+                .Include(p => p.Semanas)
+                    .ThenInclude(s => s.Dias)
+                .FirstOrDefaultAsync(p => p.Id == programaId && p.PacienteId == pacienteId);
+
+            if (programa == null)
+                return new List<IncumplimientoDto>();
+
+            var incumplimientos = programa.Semanas
+                .SelectMany(s => s.Dias.Where(d => d.Incumplido && d.Tipo == TipoDia.Rutina)
+                    .Select(d => new IncumplimientoDto
+                    {
+                        DiaRutinaId = d.Id,
+                        NombreDia = d.NombreDia,
+                        SemanaNumero = s.NumeroSemana,
+                        FechaIncumplimiento = d.FechaIncumplimiento ?? DateTime.UtcNow
+                    }))
+                .OrderBy(i => i.SemanaNumero)
+                .ThenBy(i => i.FechaIncumplimiento)
+                .ToList();
+
+            return incumplimientos;
+        }
+
+        public async Task VerificarYMarcarIncumplimientosAsync()
+        {
+            // Obtener todos los programas activos
+            var programasActivos = await _context.ProgramasRehabilitacion
+                .Include(p => p.Semanas)
+                    .ThenInclude(s => s.Dias)
+                .Where(p => p.Activo && p.FechaFin >= DateTime.UtcNow)
+                .ToListAsync();
+
+            var fechaHoy = DateTime.UtcNow.Date;
+
+            foreach (var programa in programasActivos)
+            {
+                var diasPasados = programa.Semanas
+                    .SelectMany(s => s.Dias)
+                    .Where(d => d.Tipo == TipoDia.Rutina 
+                        && !d.Completado 
+                        && !d.Incumplido
+                        && d.FechaCreacion.Date < fechaHoy)
+                    .ToList();
+
+                foreach (var dia in diasPasados)
+                {
+                    dia.Incumplido = true;
+                    dia.FechaIncumplimiento = DateTime.UtcNow;
+                }
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         private ProgramaDetalleDto MapToDetalleDto(ProgramaRehabilitacion programa)
@@ -384,6 +519,10 @@ namespace FisioAppAPI.Services
                 NombreRutina = dia.NombreRutina,
                 Completado = dia.Completado,
                 FechaCompletado = dia.FechaCompletado,
+                Incumplido = dia.Incumplido,
+                FechaIncumplimiento = dia.FechaIncumplimiento,
+                Bloqueado = false, // Se calculará dinámicamente en el frontend o aquí
+                MotivoBloqueo = null,
                 CantidadEjercicios = dia.Ejercicios.Count,
                 Ejercicios = dia.Ejercicios.OrderBy(e => e.Orden).Select(e => MapToEjercicioDetalleDto(e, dia.Progresos)).ToList()
             };

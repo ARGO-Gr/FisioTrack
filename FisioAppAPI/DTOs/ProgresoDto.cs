@@ -38,6 +38,16 @@ namespace FisioAppAPI.DTOs
         public int DiasDescanso { get; set; }
         public int DiasRestantes { get; set; }
         public int DiasTotales { get; set; }
+        public int DiasIncumplidos { get; set; }
         public double PorcentajeCompletado { get; set; }
+        public double PorcentajeIncumplimiento { get; set; }
+    }
+
+    public class IncumplimientoDto
+    {
+        public int DiaRutinaId { get; set; }
+        public string NombreDia { get; set; } = string.Empty;
+        public int SemanaNumero { get; set; }
+        public DateTime FechaIncumplimiento { get; set; }
     }
 }

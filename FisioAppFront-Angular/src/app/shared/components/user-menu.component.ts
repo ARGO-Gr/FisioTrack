@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-user-menu',
@@ -22,7 +23,7 @@ import { MatDividerModule } from '@angular/material/divider';
     <mat-menu #userMenu="matMenu" class="user-menu">
       <button mat-menu-item (click)="onChangeInfo()">
         <mat-icon>edit</mat-icon>
-        <span>Cambiar información</span>
+        <span>Perfil</span>
       </button>
       <button mat-menu-item (click)="onLogout()">
         <mat-icon class="text-red-500">logout</mat-icon>
@@ -95,11 +96,14 @@ export class UserMenuComponent {
   @Output() changeInfo = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
 
+  constructor(private router: Router) {}
+
   onChangeInfo() {
-    this.changeInfo.emit();
+    this.router.navigate(['/perfil']);
   }
 
   onLogout() {
     this.logout.emit();
   }
 }
+

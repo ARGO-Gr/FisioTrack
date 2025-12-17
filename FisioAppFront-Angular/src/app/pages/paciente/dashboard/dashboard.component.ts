@@ -152,7 +152,11 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
   }
 
   formatDate(fecha: string): string {
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    // Parse fecha como local time (formato: YYYY-MM-DD)
+    const [year, month, day] = fecha.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
+    return date.toLocaleDateString('es-ES', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',

@@ -39,6 +39,11 @@ namespace FisioAppAPI.Models
 
         public DateTime? FechaCompletado { get; set; }
 
+        // Campos para control de incumplimientos y bloqueos
+        public bool Incumplido { get; set; } = false;
+
+        public DateTime? FechaIncumplimiento { get; set; }
+
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
         // Relaciones

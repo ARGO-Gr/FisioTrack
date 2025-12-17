@@ -123,7 +123,7 @@ import { of } from 'rxjs';
         <!-- Fecha y Hora -->
         <div class="space-y-3">
           <label class="text-sm font-semibold text-foreground flex items-center gap-2">
-            <mat-icon class="text-primary !size-5">schedule</mat-icon>
+            <mat-icon class="text-primary ">schedule</mat-icon>
             Fecha y Hora *
           </label>
           <div class="grid grid-cols-2 gap-4">

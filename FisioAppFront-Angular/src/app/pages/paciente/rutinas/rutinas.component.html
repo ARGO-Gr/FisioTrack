@@ -159,20 +159,24 @@
             <!-- Left Section -->
             <div class="flex items-center gap-4 flex-1">
               <div
-                [ngClass]="getDiaColor(dia)"
+                [ngClass]="getDiaColor(dia, i)"
                 class="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
               >
-                <mat-icon >{{ getDiaIcono(dia) }}</mat-icon>
+                <mat-icon >{{ getDiaIcono(dia, i) }}</mat-icon>
               </div>
               <div class="flex-1">
                 <h4 class="text-xl font-bold text-foreground mb-1">{{ dia.dia }}</h4>
                 <!-- Mostrar estado de incumplimiento -->
                 <div *ngIf="dia.incumplimiento" class="text-base text-red-600 font-medium mb-2">
-                  ⚠️ Incumplimiento registrado
+                  ⚠️ Día incumplido - Complétalo para continuar
                 </div>
-                <!-- Mostrar estado de bloqueo -->
-                <div *ngIf="dia.bloqueado && !dia.incumplimiento" class="text-base text-gray-600 font-medium mb-2">
-                  🔒 Día bloqueado - Completa días anteriores primero
+                <!-- Mostrar estado de bloqueo por días anteriores -->
+                <div *ngIf="!dia.incumplimiento && !esDiaFuturo(i) && esdiaPosterior(i) && dia.tipo === 'rutina'" class="text-base text-amber-600 font-medium mb-2">
+                  🔒 Bloqueado - Completa días anteriores primero
+                </div>
+                <!-- Mostrar estado de día futuro -->
+                <div *ngIf="esDiaFuturo(i) && dia.tipo === 'rutina'" class="text-base text-gray-600 font-medium mb-2">
+                  Día futuro - Disponible pronto
                 </div>
                 <div *ngIf="dia.tipo === 'rutina'" class="space-y-1">
                   <p class="text-base text-muted-foreground">{{ dia.nombre }}</p>

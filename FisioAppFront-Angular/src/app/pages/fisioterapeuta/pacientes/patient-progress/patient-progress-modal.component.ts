@@ -153,13 +153,13 @@ export interface PatientProgressModalData {
 
               <!-- Weekday Headers -->
               <div class="grid grid-cols-7 gap-2 mb-2">
-                <div class="text-center font-semibold text-sm text-muted-foreground p-2">Dom</div>
                 <div class="text-center font-semibold text-sm text-muted-foreground p-2">Lun</div>
                 <div class="text-center font-semibold text-sm text-muted-foreground p-2">Mar</div>
                 <div class="text-center font-semibold text-sm text-muted-foreground p-2">Mié</div>
                 <div class="text-center font-semibold text-sm text-muted-foreground p-2">Jue</div>
                 <div class="text-center font-semibold text-sm text-muted-foreground p-2">Vie</div>
                 <div class="text-center font-semibold text-sm text-muted-foreground p-2">Sab</div>
+                <div class="text-center font-semibold text-sm text-muted-foreground p-2">Dom</div>
               </div>
 
               <!-- Calendar Days -->
@@ -293,7 +293,7 @@ export class PatientProgressModalComponent implements OnInit, OnDestroy {
 
         if (dia.tipo === 'descanso') {
           restDays.push(fechaStr);
-        } else if (dia.incumplimiento) {
+        } else if (dia.incumplido) {
           incumplimientoDays.push(fechaStr);
         } else if (dia.completado) {
           completedDays.push(fechaStr);

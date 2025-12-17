@@ -27,6 +27,12 @@ export const routes: Routes = [
     data: { userType: 'physiotherapist' }
   },
   {
+    path: 'perfil',
+    canActivate: [RoleGuard],
+    data: { requiredRole: null }, // Accessible for all authenticated users
+    loadComponent: () => import('./pages/perfil/perfil.component').then(m => m.ProfileComponent),
+  },
+  {
     path: 'fisioterapeuta',
     canActivate: [RoleGuard],
     data: { requiredRole: 'physiotherapist' },
