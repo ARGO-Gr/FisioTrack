@@ -272,7 +272,7 @@ export class ScheduleCitaModalComponent implements OnInit, OnDestroy {
     { value: 'EvaluacionInicial', label: 'Evaluación Inicial' },
     { value: 'Seguimiento', label: 'Seguimiento' },
     { value: 'ControlMensual', label: 'Control Mensual' },
-    { value: 'Rehabilitacion', label: 'Rehabilitación' },
+    { value: 'AsignacionDeRutina', label: 'Asignacion de Rutina' },
     { value: 'TerapiaManual', label: 'Terapia Manual' },
     { value: 'Electroterapia', label: 'Electroterapia' }
   ];

@@ -26,7 +26,7 @@ public enum AppointmentType
     EvaluacionInicial,
     Seguimiento,
     ControlMensual,
-    Rehabilitacion,
+    AsignacionDeRutina,
     TerapiaManual,
     Electroterapia
 }
