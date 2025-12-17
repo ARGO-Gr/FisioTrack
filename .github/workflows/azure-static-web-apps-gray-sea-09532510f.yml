@@ -4,44 +4,55 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
 
 jobs:
   build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    concurrency:               # ✅ opcional pero recomendado para que solo se despliegue el último commit
-      group: 'static-web-apps-deploy'
-      cancel-in-progress: true
+    name: Build and Deploy Job
+    permissions:
+       id-token: write
+       contents: read
     steps:
-      # 1️⃣ Clonar el repositorio
       - uses: actions/checkout@v3
-
-      # 2️⃣ Instalar Node
-      - name: Setup Node
-        uses: actions/setup-node@v3
         with:
-          node-version: '18'
-
-      # 3️⃣ Instalar dependencias de Angular
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-        working-directory: ./FisioAppFront-Angular
-
-      # 4️⃣ Build de Angular
-      - name: Build Angular
-        run: npm run build -- --configuration production
-        working-directory: ./FisioAppFront-Angular
-
-      # 5️⃣ Deploy a Azure Static Web Apps
-      - name: Deploy to Azure Static Web Apps
+          submodules: true
+          lfs: false
+      - name: Install OIDC Client from Core Package
+        run: npm install @actions/core@1.6.0 @actions/http-client
+      - name: Get Id Token
+        uses: actions/github-script@v6
+        id: idtoken
+        with:
+           script: |
+               const coredemo = require('@actions/core')
+               return await coredemo.getIDToken()
+           result-encoding: string
+      - name: Build And Deploy
+        id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_SEA_09532510F }}
-          action: "upload"                       # ✅ obligatorio para que se ejecute el deploy
-          app_location: "./FisioAppFront-Angular"
-          api_location: ""                       # tu API está en App Service separado
-          output_location: "dist/fisio-app-front-angular/browser"
+          action: "upload"
+          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
+          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
+          app_location: "./FisioAppFront-Angular" # App source code path
+          api_location: "" # Api source code path - optional
+          output_location: "dist/fisio-app-front-angular/browser" # Built app content directory - optional
+          github_id_token: ${{ steps.idtoken.outputs.result }}
+          ###### End of Repository/Build Configurations ######
 
-
-
-
-
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          action: "close"
