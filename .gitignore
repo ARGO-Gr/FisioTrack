@@ -2,7 +2,7 @@
 
 
 # Compiled output (Angular)
-FisioAppFront-Angular/dist/
+
 FisioAppFront-Angular/tmp/
 FisioAppFront-Angular/out-tsc/
 FisioAppFront-Angular/bazel-out/
