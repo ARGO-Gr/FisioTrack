@@ -340,3 +340,4 @@ C:\Users\ogra2\OneDrive\Desktop\Herman Angular\FisioAppAPI\bin\Debug\net9.0\publ
 C:\Users\ogra2\OneDrive\Desktop\Herman Angular\FisioAppAPI\bin\Debug\net9.0\publish\FisioAppAPI.deps.json
 C:\Users\ogra2\OneDrive\Desktop\Herman Angular\FisioAppAPI\bin\Debug\net9.0\publish\FisioAppAPI.runtimeconfig.json
 C:\Users\ogra2\OneDrive\Desktop\Herman Angular\FisioAppAPI\bin\Debug\net9.0\publish\FisioAppAPI.staticwebassets.endpoints.json
+C:\Users\ogra2\OneDrive\Desktop\Herman Angular\FisioAppAPI\obj\Debug\net9.0\FisioAppAPI.sourcelink.json

@@ -203,12 +203,16 @@ export class ProgramaService {
 
   // Marcar día como completado
   completarDia(diaId: number): Observable<any> {
+    const requestBody = { 
+      diaRutinaId: diaId,
+      completado: true 
+    };
+    console.log('📤 [completarDia] Enviando request a:', `${this.apiUrl}/dia/completar`);
+    console.log('📤 [completarDia] Con los datos:', requestBody);
+    console.log('📤 [completarDia] Timestamp:', new Date().toISOString());
     return this.http.post(
       `${this.apiUrl}/dia/completar`,
-      { 
-        diaRutinaId: diaId,
-        completado: true 
-      },
+      requestBody,
       { headers: this.getHeaders() }
     );
   }
@@ -227,13 +231,17 @@ export class ProgramaService {
 
   // Marcar ejercicio como completado
   completarEjercicio(ejercicioId: number, diaRutinaId: number): Observable<any> {
+    const requestBody = { 
+      ejercicioId, 
+      diaRutinaId,
+      completado: true 
+    };
+    console.log('📤 [completarEjercicio] Enviando request a:', `${this.apiUrl}/ejercicio/completar`);
+    console.log('📤 [completarEjercicio] Con los datos:', requestBody);
+    console.log('📤 [completarEjercicio] Timestamp:', new Date().toISOString());
     return this.http.post(
       `${this.apiUrl}/ejercicio/completar`,
-      { 
-        ejercicioId, 
-        diaRutinaId,
-        completado: true 
-      },
+      requestBody,
       { headers: this.getHeaders() }
     );
   }

@@ -223,91 +223,88 @@ namespace FisioAppAPI.Services
         }
 
         public async Task<bool> MarcarDiaCompletadoAsync(Guid pacienteId, MarcarDiaCompletadoDto dto)
+{
+    var dia = await _context.DiasRutina
+        .Include(d => d.Semana)
+            .ThenInclude(s => s.Programa)
+                .ThenInclude(p => p.Semanas)
+                    .ThenInclude(sem => sem.Dias)
+        .FirstOrDefaultAsync(d => d.Id == dto.DiaRutinaId);
+
+    if (dia == null || dia.Semana?.Programa?.PacienteId != pacienteId)
+        return false;
+
+    if (dto.Completado)
+    {
+        var programa = dia.Semana.Programa;
+        var todasLasSemanas = programa.Semanas.OrderBy(s => s.NumeroSemana).ToList();
+
+        // --- CALCULO CORREGIDO DE DIAS DESDE EL INICIO ---
+        int diasDesdeInicio = 0;
+        foreach (var semana in todasLasSemanas)
         {
-            var dia = await _context.DiasRutina
-                .Include(d => d.Semana)
-                    .ThenInclude(s => s.Programa)
-                        .ThenInclude(p => p.Semanas)
-                            .ThenInclude(sem => sem.Dias)
-                .FirstOrDefaultAsync(d => d.Id == dto.DiaRutinaId);
+            var diasOrdenados = semana.Dias.OrderBy(d => d.OrdenDia).ToList();
 
-            if (dia == null || dia.Semana?.Programa?.PacienteId != pacienteId)
-                return false;
-
-            // Validar que no hay días anteriores sin completar
-            if (dto.Completado)
+            foreach (var d in diasOrdenados)
             {
-                var programa = dia.Semana.Programa;
-                var todasLasSemanas = programa.Semanas.OrderBy(s => s.NumeroSemana).ToList();
-                
-                // Calcular la fecha que le corresponde a este día
-                int diasDesdeInicio = 0;
-                foreach (var semana in todasLasSemanas)
+                if (d.Id == dia.Id)
                 {
-                    if (semana.NumeroSemana < dia.Semana.NumeroSemana)
-                    {
-                        diasDesdeInicio += 7; // Agregar una semana completa
-                    }
-                    else if (semana.NumeroSemana == dia.Semana.NumeroSemana)
-                    {
-                        diasDesdeInicio += dia.OrdenDia;
-                        break;
-                    }
+                    diasDesdeInicio++; // Contamos el día actual
+                    break;
                 }
-                
-                var fechaDia = programa.FechaInicio.AddDays(diasDesdeInicio).Date;
-                var fechaHoy = DateTime.UtcNow.Date;
-                
-                // Validar que no está intentando adelantar días futuros
-                if (fechaDia > fechaHoy)
-                {
-                    return false; // No permitir completar días futuros
-                }
-                
-                // Buscar días de rutina anteriores no completados
-                bool hayDiasPendientes = false;
-                foreach (var semana in todasLasSemanas)
-                {
-                    if (semana.NumeroSemana > dia.Semana.NumeroSemana)
-                        break;
-                        
-                    var diasOrdenados = semana.Dias.OrderBy(d => d.OrdenDia).ToList();
-                    
-                    foreach (var diaAnterior in diasOrdenados)
-                    {
-                        // Si llegamos al día actual, detenerse
-                        if (diaAnterior.Id == dia.Id)
-                            break;
-                            
-                        // Si es día de rutina y no está completado
-                        if (diaAnterior.Tipo == TipoDia.Rutina && !diaAnterior.Completado)
-                        {
-                            hayDiasPendientes = true;
-                            break;
-                        }
-                    }
-                    
-                    if (hayDiasPendientes)
-                        break;
-                }
-                
-                if (hayDiasPendientes)
-                {
-                    return false; // No permitir completar si hay días pendientes
-                }
+
+                if (d.Tipo == TipoDia.Rutina)
+                    diasDesdeInicio++;
             }
 
-            dia.Completado = dto.Completado;
-            dia.FechaCompletado = dto.Completado ? DateTime.UtcNow : null;
-            
-            // Si se marca como no completado después de la fecha, es incumplimiento
-            if (!dto.Completado && dia.Incumplido)
-            {
-                // Ya estaba marcado como incumplido, mantener el estado
-            }
-
-            return await _context.SaveChangesAsync() > 0;
+            if (semana.NumeroSemana == dia.Semana.NumeroSemana)
+                break;
         }
+
+        var fechaDia = programa.FechaInicio.AddDays(diasDesdeInicio - 1).Date;
+        var fechaHoy = DateTime.UtcNow.Date;
+
+        // --- VALIDACION DE DIAS PENDIENTES ---
+        bool hayDiasPendientes = false;
+        foreach (var semana in todasLasSemanas)
+        {
+            if (semana.NumeroSemana > dia.Semana.NumeroSemana)
+                break;
+
+            var diasOrdenados = semana.Dias.OrderBy(d => d.OrdenDia).ToList();
+
+            foreach (var diaAnterior in diasOrdenados)
+            {
+                if (diaAnterior.Id == dia.Id)
+                    break;
+
+                if (diaAnterior.Tipo == TipoDia.Rutina && !diaAnterior.Completado)
+                {
+                    hayDiasPendientes = true;
+                    break;
+                }
+            }
+
+            if (hayDiasPendientes)
+                break;
+        }
+
+        if (hayDiasPendientes)
+            return false; // No permitir completar si hay días pendientes
+    }
+
+    // --- MARCAR COMO COMPLETADO ---
+    dia.Completado = dto.Completado;
+    dia.FechaCompletado = dto.Completado ? DateTime.UtcNow : null;
+
+    // --- INCUMPLIMIENTO (se mantiene si ya estaba marcado) ---
+    if (!dto.Completado && dia.Incumplido)
+    {
+        // Ya estaba marcado como incumplido, no cambiar
+    }
+
+    return await _context.SaveChangesAsync() > 0;
+}
 
         public async Task<bool> MarcarEjercicioCompletadoAsync(Guid pacienteId, MarcarEjercicioCompletadoDto dto)
         {

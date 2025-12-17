@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// builder.Services.AddOpenApi();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -75,7 +75,11 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Add controllers and register application services
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
 // User registration / confirmation services
 builder.Services.Configure<FisioAppAPI.Models.EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
@@ -110,7 +114,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection(); // Comentado para desarrollo con HTTP
+// app.UseHttpsRedirection(); // Comentado para desarrollo con HTTP
 
 app.UseCors("AllowAngularApp");
 

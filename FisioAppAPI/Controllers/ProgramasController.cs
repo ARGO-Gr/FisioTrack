@@ -223,6 +223,19 @@ namespace FisioAppAPI.Controllers
         {
             try
             {
+                Console.WriteLine($"🔍 [MarcarDiaCompletado] DTO recibido: DiaRutinaId={dto?.DiaRutinaId}, Completado={dto?.Completado}");
+                Console.WriteLine($"🔍 [MarcarDiaCompletado] ModelState válido: {ModelState.IsValid}");
+                
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors);
+                    foreach (var error in errors)
+                    {
+                        Console.WriteLine($"❌ [MarcarDiaCompletado] Error de validación: {error.ErrorMessage}");
+                    }
+                    return BadRequest(new { message = "Datos inválidos", errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+                }
+
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
                     return Unauthorized(new { message = "Usuario no autenticado" });

@@ -187,8 +187,16 @@ export class EjecutarRutinaComponent implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error('Error al completar ejercicio:', error);
-          this.toastService.error('Error al guardar el progreso. Por favor, intenta nuevamente.');
+          console.error('❌ [handleCompletarEjercicio] Error:', {
+            status: error.status,
+            statusText: error.statusText,
+            message: error.message,
+            error: error.error,
+            ejercicioId: ejercicio.id,
+            diaId: this.diaId,
+            timestamp: new Date().toISOString()
+          });
+          this.toastService.error('Error al guardar el progreso. Por favor, intenta nuevamente');
         }
       });
   }
@@ -226,7 +234,15 @@ export class EjecutarRutinaComponent implements OnInit, OnDestroy {
           this.router.navigate(['/paciente/rutinas']);
         },
         error: (error) => {
-          console.error('Error al finalizar rutina:', error);
+          console.error('❌ [handleFinalizarRutina] Error:', {
+            status: error.status,
+            statusText: error.statusText,
+            message: error.message,
+            error: error.error,
+            diaId: this.diaId,
+            todosCompletados: this.todosCompletados,
+            timestamp: new Date().toISOString()
+          });
           this.toastService.error('Error al finalizar la rutina. Por favor, intenta nuevamente.');
         }
       });
