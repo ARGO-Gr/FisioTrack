@@ -15,12 +15,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngularApp", builder =>
     {
-        builder.WithOrigins("http://localhost:4200", "https://localhost:4200")
-               .AllowAnyMethod()
-               .AllowAnyHeader()
-               .AllowCredentials();
+        builder.WithOrigins(
+                "http://localhost:4200", 
+                "https://localhost:4200",
+                "https://gray-sea-09532510f.3.azurestaticapps.net"  // producción
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
+
 
 // Configure JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
