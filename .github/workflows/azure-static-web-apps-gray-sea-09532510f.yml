@@ -35,11 +35,12 @@ jobs:
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: "45a36cd6d4e950d429bc848808caee27f575cb32dfe5ac149df4a569b8e8dfa703-1921a20f-48b4-46f5-b5b6-ad1abdd26c3400f030309532510f"
           action: "upload"                       # ✅ obligatorio para que se ejecute el deploy
           app_location: "./FisioAppFront-Angular"
           api_location: ""                       # tu API está en App Service separado
           output_location: "dist/fisio-app-front-angular/browser"
+
 
 
 
