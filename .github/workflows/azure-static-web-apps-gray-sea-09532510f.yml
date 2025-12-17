@@ -39,5 +39,6 @@ jobs:
           action: "upload"                       # ✅ obligatorio para que se ejecute el deploy
           app_location: "./FisioAppFront-Angular"
           api_location: ""                       # tu API está en App Service separado
-          output_location: "dist/fisio-app-front-angular"
+          output_location: "dist/fisio-app-front-angular/browser"
+
 
