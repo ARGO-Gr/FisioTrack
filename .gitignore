@@ -1,0 +1,58 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+
+# Compiled output (Angular)
+FisioAppFront-Angular/dist/
+FisioAppFront-Angular/tmp/
+FisioAppFront-Angular/out-tsc/
+FisioAppFront-Angular/bazel-out/
+
+
+# Node
+FisioAppFront-Angular/node_modules/
+FisioAppFront-Angular/npm-debug.log
+FisioAppFront-Angular/yarn-error.log
+
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+
+# Miscellaneous
+FisioAppFront-Angular/.angular/cache/
+FisioAppFront-Angular/.sass-cache/
+FisioAppFront-Angular/connect.lock
+FisioAppFront-Angular/coverage/
+FisioAppFront-Angular/libpeerconnection.log
+FisioAppFront-Angular/testem.log
+FisioAppFront-Angular/typings/
+
+
+# System files
+.DS_Store
+Thumbs.db
+
+# .NET build output (API)
+FisioAppAPI/bin/
+FisioAppAPI/obj/
+FisioAppAPI/.vs/
+FisioAppAPI/publish/
+FisioAppAPI/*.user
+FisioAppAPI/*.suo
+FisioAppAPI/*.cache
+FisioAppAPI/*.log

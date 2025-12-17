@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FisioAppAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7fb89cd4cf025e420ff3f4387060f8acd9d37a56")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+66f71a3214c1c8f71b7dec14b6aa3a489ccdccb8")]
 [assembly: System.Reflection.AssemblyProductAttribute("FisioAppAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FisioAppAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
