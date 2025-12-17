@@ -8,6 +8,9 @@ on:
 jobs:
   build_and_deploy_job:
     runs-on: ubuntu-latest
+    concurrency:               # ✅ opcional pero recomendado para que solo se despliegue el último commit
+      group: 'static-web-apps-deploy'
+      cancel-in-progress: true
     steps:
       # 1️⃣ Clonar el repositorio
       - uses: actions/checkout@v3
@@ -33,6 +36,7 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_SEA_09532510F }}
+          action: "upload"                       # ✅ obligatorio para que se ejecute el deploy
           app_location: "./FisioAppFront-Angular"
-          api_location: ""
+          api_location: ""                       # tu API está en App Service separado
           output_location: "dist/fisio-app-front-angular"
