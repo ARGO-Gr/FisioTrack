@@ -37,7 +37,9 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_SEA_09532510F }}
+          action: "upload"  # << obligatorio
           app_location: "FisioAppFront-Angular"
           api_location: "" # vacío si no tienes backend
           output_location: "FisioAppFront-Angular/dist/fisio-app-front-angular/browser"
           skip_app_build: true # ya construimos la app en el paso anterior
+
