@@ -10,45 +10,34 @@ on:
       - main
 
 jobs:
-  build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+  build_and_deploy:
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
-    permissions:
-       id-token: write
-       contents: read
+    name: Build and Deploy
     steps:
+      # 1. Obtener el código
       - uses: actions/checkout@v3
-        with:
-          submodules: true
-          lfs: false
 
-      - name: Get Id Token
-        uses: actions/github-script@v6
-        id: idtoken
+      # 2. Configurar Node.js
+      - uses: actions/setup-node@v3
         with:
-           script: |
-               const coredemo = require('@actions/core')
-               return await coredemo.getIDToken()
-           result-encoding: string
+          node-version: '18' # misma versión que usas local
 
-      - name: Build And Deploy
-        id: builddeploy
+      # 3. Instalar dependencias con legacy-peer-deps (Angular 19 puede requerirlo)
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+        working-directory: ./FisioAppFront-Angular
+
+      # 4. Build Angular
+      - name: Build Angular App
+        run: npm run build -- --configuration production
+        working-directory: ./FisioAppFront-Angular
+
+      # 5. Deploy a Azure Static Web Apps
+      - name: Deploy to Azure Static Web App
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_SEA_09532510F }}
-          app_location: "FisioAppFront-Angular"                         # Ruta de tu package.json
-          api_location: ""                                               # Vacío si no tienes backend
-          output_location: "FisioAppFront-Angular/dist/fisio-app-front-angular/browser"  # Carpeta de build
-          github_id_token: ${{ steps.idtoken.outputs.result }}
-
-  close_pull_request_job:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    name: Close Pull Request Job
-    steps:
-      - name: Close Pull Request
-        id: closepullrequest
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          action: "close"
+          app_location: "FisioAppFront-Angular"
+          api_location: "" # vacío si no tienes backend
+          output_location: "FisioAppFront-Angular/dist/fisio-app-front-angular/browser"
+          skip_app_build: true # ya construimos la app en el paso anterior
